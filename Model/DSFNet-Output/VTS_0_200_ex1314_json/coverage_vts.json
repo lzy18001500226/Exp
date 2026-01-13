@@ -1,0 +1,15 @@
+{
+  "label_root": "D:\\Exp\\VTSLabel",
+  "train": {
+    "input_npz": 2091,
+    "json_missing": 159,
+    "json_empty": 0,
+    "kept": 2091
+  },
+  "val": {
+    "input_npz": 522,
+    "json_missing": 49,
+    "json_empty": 0,
+    "kept": 522
+  }
+}

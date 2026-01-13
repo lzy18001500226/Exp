@@ -1,0 +1,15 @@
+{
+  "label_root": "D:\\Exp\\FCSLabel",
+  "train": {
+    "input_npz": 3538,
+    "json_missing": 164,
+    "json_empty": 0,
+    "kept": 3538
+  },
+  "val": {
+    "input_npz": 884,
+    "json_missing": 58,
+    "json_empty": 0,
+    "kept": 884
+  }
+}

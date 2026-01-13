@@ -1,0 +1,49 @@
+data:
+  train_list: C:\Users\HP\Desktop\Exp\Model\DSFNet-Output\VTS_0_200_ex1314\train_list_vts.txt
+  val_list: C:\Users\HP\Desktop\Exp\Model\DSFNet-Output\VTS_0_200_ex1314\val_list_vts.txt
+  stats: ''
+  num_classes: 22
+  stem_min: 0
+  stem_max: 200
+model:
+  backbone_type: convnext
+  embed_dim: 512
+  swin_name: convnext_base
+  swin_checkpoint: C:\Users\HP\Desktop\Exp\Model\Pretrain\ConvNeXt\timm\convnext_base.pth
+  pretrained: false
+train:
+  epochs: 30
+  batch_size: 6
+  lr: 0.001
+  seed: 3407
+  amp: true
+  num_workers: 0
+  save_interval: 1
+aug:
+  is_train_aug: true
+  use_bg_mix: true
+  bg_mix_p: 0.5
+  alpha_range:
+  - 0.1
+  - 0.3
+  use_freq_shift: true
+  freq_shift_p: 0.8
+  shift_mhz: 10.0
+  use_frac_freq_shift: false
+  use_time_stretch: true
+  time_stretch_p: 0.8
+  time_scale_range:
+  - 0.9
+  - 1.1
+  use_noise: true
+  noise_p: 0.5
+  noise_k_range:
+  - 0.01
+  - 0.05
+  use_specaug: true
+  specaug_p: 0.5
+  specaug_time_ratio: 0.2
+  specaug_freq_ratio: 0.2
+  specaug_num_masks: 2
+  bandwidth_mhz: 100.0
+run_dir: C:\Users\HP\Desktop\Exp\Model\DSFNet-Output\CLS_0_200_ex1314\Run-B1-20251022-1138

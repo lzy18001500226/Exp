@@ -1,0 +1,28 @@
+data:
+  train_list: C:\Users\HP\Desktop\Exp\Model\DSFNet-Output\FCS_0_200_ex1314_json\train_list_fcs.txt
+  val_list: C:\Users\HP\Desktop\Exp\Model\DSFNet-Output\FCS_0_200_ex1314_json\val_list_fcs.txt
+  num_classes: 22
+  smnet_preproc: true
+  edge_high: null
+  edge_low: null
+  harris_gamma: 0.04
+  posenc_scale: 0.2
+  strict_val: true
+model:
+  backbone_type: swin
+  pretrained: false
+  checkpoint: C:/Users/HP/Desktop/Exp/Model/Pretrain/Swin/timm/swin_base_patch4_window7_224_timm.pth
+  num_anchors: 3
+  head_out_up: 1
+train:
+  epochs: 40
+  batch_size: 4
+  seed: 3407
+  amp: true
+  num_workers: 0
+  lr: 0.001
+  exclude_classes:
+  - 13
+  - 14
+  conf_thresh: 0.05
+run_dir: C:\Users\HP\Desktop\Exp\Model\DSFNet-Output\CLS_0_200_ex1314\Det-B0-20251025-1633

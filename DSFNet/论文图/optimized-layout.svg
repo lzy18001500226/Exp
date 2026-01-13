@@ -1,0 +1,397 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1800px" height="1000px" viewBox="0 0 1800 1000" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <style>
+      .container { fill: none; stroke: #333; stroke-width: 2; }
+      .dashed-box { fill: none; stroke: #333; stroke-width: 2; stroke-dasharray: 8 4; }
+      .box { fill: #f8f9fa; stroke: #333; stroke-width: 1.5; }
+      .arrow-line { fill: none; stroke: #000; stroke-width: 2; }
+      .text-label { font-family: 'Helvetica', 'Arial', sans-serif; font-size: 18px; text-anchor: middle; }
+      .text-title { font-family: 'Helvetica', 'Arial', sans-serif; font-size: 24px; font-weight: bold; text-anchor: middle; }
+      .text-small { font-family: 'Helvetica', 'Arial', sans-serif; font-size: 14px; text-anchor: middle; }
+      .text-legend { font-family: 'Helvetica', 'Arial', sans-serif; font-size: 16px; text-anchor: start; }
+    </style>
+    <marker id="arrowhead" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#000" />
+    </marker>
+    <!-- Drone Icon -->
+    <symbol id="drone-icon" viewBox="0 0 100 60">
+      <path d="M 40 30 L 60 30 L 60 20 L 70 20 L 70 40 L 60 40 L 60 30" fill="none" stroke-width="4" />
+      <path d="M 50 25 L 50 35" stroke-width="12" />
+      <path d="M 10 10 L 30 25" stroke-width="4" />
+      <path d="M 10 50 L 30 35" stroke-width="4" />
+      <path d="M 90 10 L 70 25" stroke-width="4" />
+      <path d="M 90 50 L 70 35" stroke-width="4" />
+      <circle cx="10" cy="10" r="8" fill="none" stroke-width="3" />
+      <circle cx="10" cy="50" r="8" fill="none" stroke-width="3" />
+      <circle cx="90" cy="10" r="8" fill="none" stroke-width="3" />
+      <circle cx="90" cy="50" r="8" fill="none" stroke-width="3" />
+    </symbol>
+  </defs>
+
+  <!-- Title -->
+  <text x="900" y="40" class="text-title" style="font-size: 28px;">Drone Classification Pipeline with Open-Set Recognition</text>
+
+  <!-- Dataset Section - More compact -->
+  <text x="900" y="90" class="text-title">Dataset</text>
+  <rect x="400" y="110" width="1000" height="100" class="container" />
+  
+  <!-- Dataset Boxes - Side by side with better spacing -->
+  <g id="dataset-known">
+    <rect x="450" y="130" width="400" height="60" class="dashed-box" />
+    <text x="650" y="155" class="text-label">Known Classes (Training)</text>
+    <use xlink:href="#drone-icon" x="480" y="160" width="50" height="30" stroke="#d9534f"/>
+    <use xlink:href="#drone-icon" x="560" y="160" width="50" height="30" stroke="#5cb85c"/>
+    <use xlink:href="#drone-icon" x="640" y="160" width="50" height="30" stroke="#428bca"/>
+    <use xlink:href="#drone-icon" x="720" y="160" width="50" height="30" stroke="#d9534f"/>
+  </g>
+  <g id="dataset-unknown">
+    <rect x="950" y="130" width="400" height="60" class="dashed-box" />
+    <text x="1150" y="155" class="text-label">Unknown Classes (Testing)</text>
+    <use xlink:href="#drone-icon" x="980" y="160" width="50" height="30" stroke="#6f42c1"/>
+    <use xlink:href="#drone-icon" x="1060" y="160" width="50" height="30" stroke="#f0ad4e"/>
+    <use xlink:href="#drone-icon" x="1140" y="160" width="50" height="30" stroke="#888"/>
+    <use xlink:href="#drone-icon" x="1220" y="160" width="50" height="30" stroke="#6f42c1"/>
+  </g>
+
+  <!-- Arrows from Dataset -->
+  <path class="arrow-line" marker-end="url(#arrowhead)" d="M 650, 210 L 650, 240" />
+  <text x="700" y="230" class="text-label">Training Data</text>
+  <path class="arrow-line" marker-end="url(#arrowhead)" d="M 1150, 210 L 1150, 240 L 1450, 240 L 1450, 300" />
+  <text x="1300" y="230" class="text-label">Testing Data</text>
+
+  <!-- Feature Generation - Better positioned -->
+  <g id="feature-generation">
+    <rect x="50" y="270" width="280" height="400" class="container" />
+    <text x="190" y="300" class="text-title">Feature Generation</text>
+    
+    <!-- I/Q Data with better visualization -->
+    <rect x="80" y="320" width="220" height="120" class="box" />
+    <path d="M 90 370 C 100 340, 120 340, 130 370 S 150 400, 160 370 S 180 340, 190 370 S 210 400, 220 370 S 240 340, 250 370 S 270 400, 280 370" stroke="#ff7f0e" stroke-width="2" fill="none" />
+    <path d="M 90 370 C 100 400, 120 400, 130 370 S 150 340, 160 370 S 180 400, 190 370 S 210 340, 220 370 S 240 400, 250 370 S 270 340, 280 370" stroke="#1f77b4" stroke-width="2" fill="none" />
+    <text x="190" y="430" class="text-label" style="font-weight: bold;">I/Q Signal Data</text>
+    
+    <path class="arrow-line" marker-end="url(#arrowhead)" d="M 190, 445 L 190, 480" />
+    <text x="240" y="465" class="text-label">STFT</text>
+    
+    <!-- TFS with improved gradient -->
+    <rect x="80" y="485" width="220" height="160" class="box">
+      <linearGradient id="tfs-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" style="stop-color:#ffff00" />
+        <stop offset="50%" style="stop-color:#33cc33" />
+        <stop offset="100%" style="stop-color:#006600" />
+      </linearGradient>
+    </rect>
+    <rect x="80" y="485" width="220" height="160" fill="url(#tfs-gradient)" />
+    
+    <!-- Feature points overlay -->
+    <rect x="100" y="530" width="6" height="25" fill="#d62728" />
+    <rect x="125" y="540" width="6" height="15" fill="#d62728" />
+    <rect x="150" y="535" width="6" height="20" fill="#d62728" />
+    <rect x="175" y="530" width="6" height="25" fill="#d62728" />
+    <rect x="200" y="540" width="6" height="15" fill="#d62728" />
+    <rect x="225" y="535" width="6" height="20" fill="#d62728" />
+    <rect x="250" y="530" width="6" height="25" fill="#d62728" />
+    <rect x="270" y="540" width="6" height="15" fill="#d62728" />
+    
+    <circle cx="110" cy="590" r="4" fill="#d62728" />
+    <circle cx="160" cy="600" r="4" fill="#d62728" />
+    <circle cx="210" cy="580" r="4" fill="#d62728" />
+    <circle cx="260" cy="610" r="4" fill="#d62728" />
+    
+    <text x="190" y="635" class="text-label" style="font-weight: bold;">Time-Frequency Spectrum</text>
+  </g>
+  
+  <path class="arrow-line" marker-end="url(#arrowhead)" d="M 330, 400 L 380, 400" />
+  <text x="355" y="390" class="text-label" style="font-weight: bold;">X</text>
+
+  <!-- Texture Extractor - Better aligned -->
+  <g id="texture-extractor">
+    <rect x="380" y="270" width="320" height="210" class="container" />
+    <text x="540" y="300" class="text-title">Texture Extractor (TE)</text>
+    
+    <!-- DCLs layers with improved spacing -->
+    <rect x="410" y="320" width="110" height="35" class="box" /> 
+    <text x="465" y="343" class="text-label">DCLs-1</text>
+    
+    <rect x="410" y="375" width="110" height="35" class="box" /> 
+    <text x="465" y="398" class="text-label">DCLs-3</text>
+    
+    <rect x="410" y="430" width="110" height="35" class="box" /> 
+    <text x="465" y="453" class="text-label">DCLs-5</text>
+    
+    <!-- GAP blocks -->
+    <path class="arrow-line" marker-end="url(#arrowhead)" d="M 520, 337 L 545, 337" />
+    <rect x="545" y="320" width="60" height="35" class="box" /> 
+    <text x="575" y="343" class="text-label">GAP</text>
+    
+    <path class="arrow-line" marker-end="url(#arrowhead)" d="M 520, 392 L 545, 392" />
+    <rect x="545" y="375" width="60" height="35" class="box" /> 
+    <text x="575" y="398" class="text-label">GAP</text>
+    
+    <path class="arrow-line" marker-end="url(#arrowhead)" d="M 520, 447 L 545, 447" />
+    <rect x="545" y="430" width="60" height="35" class="box" /> 
+    <text x="575" y="453" class="text-label">GAP</text>
+    
+    <!-- Concatenate node -->
+    <path class="arrow-line" marker-end="url(#arrowhead)" d="M 605, 337 L 625, 377" /> 
+    <text x="615" y="360" class="text-small">z₁</text>
+    <path class="arrow-line" marker-end="url(#arrowhead)" d="M 605, 392 L 625, 392" /> 
+    <text x="615" y="387" class="text-small">z₃</text>
+    <path class="arrow-line" marker-end="url(#arrowhead)" d="M 605, 447 L 625, 407" /> 
+    <text x="615" y="452" class="text-small">z₅</text>
+    
+    <circle cx="635" cy="392" r="18" class="box" /> 
+    <text x="635" y="398" class="text-label">⊕</text>
+    
+    <!-- MNLs -->
+    <path class="arrow-line" marker-end="url(#arrowhead)" d="M 653, 392 L 668, 392" />
+    <rect x="668" y="340" width="15" height="105" fill="none" stroke="#333" stroke-width="2" />
+    <rect x="673" y="345" width="5" height="23" fill="#a6cee3" />
+    <rect x="673" y="368" width="5" height="23" fill="#a6cee3" />
+    <rect x="673" y="391" width="5" height="23" fill="#a6cee3" />
+    <rect x="673" y="414" width="5" height="23" fill="#a6cee3" />
+    <text x="690" y="457" class="text-small">MNLs</text>
+  </g>
+  
+  <path class="arrow-line" marker-end="url(#arrowhead)" d="M 700, 392 L 740, 392" />
+  <text x="720" y="385" class="text-label" style="font-weight: bold;">z̃ₐ</text>
+  
+  <!-- Position Extractor - Reorganized for clarity -->
+  <g id="position-extractor">
+    <rect x="380" y="500" width="320" height="240" class="container" />
+    <text x="540" y="530" class="text-title">Position Extractor (PE)</text>
+    
+    <!-- Top Path (Time) -->
+    <rect x="410" y="550" width="50" height="30" class="box" />
+    <text x="435" y="570" class="text-small">PE</text>
+    <circle cx="475" cy="565" r="12" fill="#f8f9fa" stroke="#333" stroke-width="1.5" />
+    <text x="475" y="570" class="text-small">+</text>
+    <path class="arrow-line" marker-end="url(#arrowhead)" d="M 335, 565 L 410, 565" />
+    <text x="370" y="560" class="text-label">X̂</text>
+    <path class="arrow-line" marker-end="url(#arrowhead)" d="M 460, 565 L 463, 565" />
+    <path class="arrow-line" marker-end="url(#arrowhead)" d="M 435, 580 L 435, 595 L 475, 595 L 475, 577" />
+    
+    <path class="arrow-line" marker-end="url(#arrowhead)" d="M 487, 565 L 515, 565" />
+    <text x="501" y="555" class="text-label">X̂ₜ</text>
+    <rect x="515" y="550" width="45" height="30" class="box" />
+    <text x="537" y="570" class="text-small">SA</text>
+    
+    <path class="arrow-line" marker-end="url(#arrowhead)" d="M 560, 565 L 585, 565" />
+    <text x="572" y="555" class="text-label">X̃ₜ</text>
+    <rect x="585" y="550" width="40" height="30" class="box" />
+    <text x="605" y="570" class="text-small">F</text>
+    
+    <!-- Bottom Path (Frequency) -->
+    <rect x="410" y="630" width="50" height="30" class="box" />
+    <text x="435" y="650" class="text-small">PE</text>
+    <circle cx="475" cy="645" r="12" fill="#f8f9fa" stroke="#333" stroke-width="1.5" />
+    <text x="475" y="650" class="text-small">+</text>
+    <path class="arrow-line" marker-end="url(#arrowhead)" d="M 335, 645 L 410, 645" />
+    <text x="370" y="640" class="text-label">[X̂]ᵀ</text>
+    <path class="arrow-line" marker-end="url(#arrowhead)" d="M 460, 645 L 463, 645" />
+    <path class="arrow-line" marker-end="url(#arrowhead)" d="M 435, 660 L 435, 675 L 475, 675 L 475, 657" />
+    
+    <path class="arrow-line" marker-end="url(#arrowhead)" d="M 487, 645 L 515, 645" />
+    <text x="501" y="635" class="text-label">X̂_F</text>
+    <rect x="515" y="630" width="45" height="30" class="box" />
+    <text x="537" y="650" class="text-small">SA</text>
+    
+    <path class="arrow-line" marker-end="url(#arrowhead)" d="M 560, 645 L 585, 645" />
+    <text x="572" y="635" class="text-label">X̃_F</text>
+    <rect x="585" y="630" width="40" height="30" class="box" />
+    <text x="605" y="650" class="text-small">F</text>
+    
+    <!-- MNLs outputs -->
+    <path class="arrow-line" marker-end="url(#arrowhead)" d="M 625, 565 L 645, 565" />
+    <rect x="645" y="545" width="15" height="40" fill="none" stroke="#333" stroke-width="2" />
+    <rect x="648" y="548" width="9" height="11" fill="#1f78b4" />
+    <rect x="648" y="559" width="9" height="11" fill="#1f78b4" />
+    <rect x="648" y="570" width="9" height="11" fill="#1f78b4" />
+    <text x="668" y="595" class="text-small">MNLs</text>
+    
+    <path class="arrow-line" marker-end="url(#arrowhead)" d="M 625, 645 L 645, 645" />
+    <rect x="645" y="625" width="15" height="40" fill="none" stroke="#333" stroke-width="2" />
+    <rect x="648" y="628" width="9" height="11" fill="#ff7f00" />
+    <rect x="648" y="639" width="9" height="11" fill="#ff7f00" />
+    <rect x="648" y="650" width="9" height="11" fill="#ff7f00" />
+    <text x="668" y="675" class="text-small">MNLs</text>
+  </g>
+  
+  <path class="arrow-line" marker-end="url(#arrowhead)" d="M 665, 565 L 740, 565" />
+  <text x="702" y="558" class="text-label" style="font-weight: bold;">z̃_b</text>
+  <path class="arrow-line" marker-end="url(#arrowhead)" d="M 665, 645 L 740, 645" />
+  <text x="702" y="638" class="text-label" style="font-weight: bold;">z̃_c</text>
+  
+  <!-- Semantic Optimization - Better positioned -->
+  <g id="semantic-optimization">
+    <rect x="740" y="320" width="280" height="180" class="container" />
+    <text x="880" y="350" class="text-title">Semantic Optimization</text>
+    
+    <!-- Loss components -->
+    <rect x="780" y="370" width="180" height="60" class="dashed-box" />
+    <text x="870" y="390" class="text-label">Training Loss</text>
+    <text x="810" y="415" class="text-label">Lₛₑₙ</text>
+    <text x="870" y="415" class="text-label">Lₛₗᵤ</text>
+    <text x="930" y="415" class="text-label">Lₛₑ</text>
+    
+    <!-- Concatenate -->
+    <circle cx="760" cy="435" r="18" class="box" />
+    <text x="760" y="441" class="text-label">⊕</text>
+    <path class="arrow-line" marker-end="url(#arrowhead)" d="M 750, 392 L 750, 417" />
+    <path class="arrow-line" d="M 710, 565 L 710, 435 L 742, 435" stroke-dasharray="5,5" />
+    <path class="arrow-line" d="M 710, 645 L 680, 645 L 680, 435 L 742, 435" stroke-dasharray="5,5" />
+    
+    <!-- Optimize block -->
+    <path class="arrow-line" marker-end="url(#arrowhead)" d="M 778, 435 L 800, 435" />
+    <rect x="800" y="370" width="15" height="130" class="dashed-box" />
+    <rect x="803" y="375" width="9" height="36" fill="#a6cee3" />
+    <rect x="803" y="411" width="9" height="36" fill="#1f78b4" />
+    <rect x="803" y="447" width="9" height="36" fill="#ff7f00" />
+    <text x="825" y="460" class="text-label">Optimize</text>
+    
+    <path class="arrow-line" marker-end="url(#arrowhead)" d="M 815, 435 L 950, 435" />
+    <text x="880" y="428" class="text-label" style="font-weight: bold;">z</text>
+  </g>
+  
+  <!-- Semantic Augmentation - Aligned -->
+  <g id="semantic-augmentation">
+    <rect x="740" y="550" width="280" height="180" class="container" />
+    <text x="880" y="580" class="text-title">Semantic Augmentation</text>
+    
+    <circle cx="760" cy="625" r="18" class="box" />
+    <text x="760" y="631" class="text-label">⊕</text>
+    <path class="arrow-line" marker-end="url(#arrowhead)" d="M 806, 500 L 806, 625 L 778, 625" />
+    <path class="arrow-line" marker-end="url(#arrowhead)" d="M 680, 340 L 680, 625 L 742, 625" stroke-dasharray="5,5" />
+    
+    <!-- Augment vector -->
+    <path class="arrow-line" marker-end="url(#arrowhead)" d="M 778, 625 L 800, 625" />
+    <rect x="800" y="560" width="15" height="130" fill="none" stroke="#333" stroke-width="2" />
+    <rect x="803" y="565" width="9" height="36" fill="#a6cee3" />
+    <rect x="803" y="601" width="9" height="36" fill="#b2df8a" />
+    <rect x="803" y="637" width="9" height="36" fill="#fb9a99" />
+    <text x="825" y="645" class="text-label">Augment</text>
+    
+    <path class="arrow-line" marker-end="url(#arrowhead)" d="M 815, 625 L 950, 625" />
+    <text x="880" y="618" class="text-label" style="font-weight: bold;">z̄</text>
+  </g>
+  
+  <!-- Testing Section - Reorganized with better spacing -->
+  <g id="testing">
+    <!-- Known Classification -->
+    <rect x="1050" y="300" width="700" height="280" class="container" />
+    <text x="1400" y="330" class="text-title">Known Class Recognition (Closed-Set)</text>
+    
+    <path class="arrow-line" marker-end="url(#arrowhead)" d="M 950, 435 L 1050, 435" />
+    <path class="arrow-line" marker-end="url(#arrowhead)" d="M 950, 625 L 1000, 625 L 1000, 435 L 1050, 435" />
+    
+    <!-- Class 1 -->
+    <ellipse cx="1180" cy="400" rx="70" ry="50" class="dashed-box" stroke="#d9534f" stroke-width="2.5" />
+    <text x="1180" y="465" class="text-label" fill="#d9534f">Known Class 1</text>
+    <path d="M 1170 410 l 10 -20 l 10 20 z" fill="#d9534f" />
+    <path d="M 1190 400 l 10 -20 l 10 20 z" fill="#d9534f" />
+    <path d="M 1150 400 l 10 -20 l 10 20 z" fill="#d9534f" />
+    <path d="M 1210 410 l 10 -20 l 10 20 z" fill="#d9534f" />
+    
+    <!-- Class 2 -->
+    <ellipse cx="1400" cy="470" rx="70" ry="50" class="dashed-box" stroke="#5cb85c" stroke-width="2.5" />
+    <text x="1400" y="535" class="text-label" fill="#5cb85c">Known Class 2</text>
+    <circle cx="1390" cy="470" r="10" fill="#5cb85c" />
+    <circle cx="1410" cy="480" r="10" fill="#5cb85c" />
+    <circle cx="1370" cy="480" r="10" fill="#5cb85c" />
+    <circle cx="1420" cy="460" r="10" fill="#5cb85c" />
+    <circle cx="1400" cy="450" r="10" fill="#5cb85c" />
+    
+    <!-- Class 3 -->
+    <ellipse cx="1620" cy="400" rx="70" ry="50" class="dashed-box" stroke="#428bca" stroke-width="2.5" />
+    <text x="1620" y="465" class="text-label" fill="#428bca">Known Class 3</text>
+    <rect x="1610" y="390" width="20" height="20" fill="#428bca" />
+    <rect x="1630" y="410" width="20" height="20" fill="#428bca" />
+    <rect x="1590" y="410" width="20" height="20" fill="#428bca" />
+    <rect x="1640" y="380" width="20" height="20" fill="#428bca" />
+    
+    <!-- Unknown Samples scattered -->
+    <path d="M 1300 370 l 12 -12 l 12 12 l -12 12 z" fill="#6f42c1" />
+    <text x="1300" y="360" class="text-small" fill="#6f42c1">Unknown</text>
+    <path d="M 1280 470 l 12 -12 l 12 12 l -12 12 z" fill="#6f42c1" />
+    <path d="M 1500 370 l 18 0 l -9 18 z" transform="rotate(45 1500 370)" fill="#f0ad4e" />
+    <text x="1500" y="360" class="text-small" fill="#f0ad4e">Unknown</text>
+    <path d="M 1320 420 l 18 0 l -9 18 z" transform="rotate(45 1320 420)" fill="#f0ad4e" />
+    <path d="M 1340 360 l 12 0 l 6 12 l -6 12 l -12 0 l -6 -12 z" fill="#888" />
+    <text x="1340" y="345" class="text-small" fill="#888">Unknown</text>
+    
+    <!-- Refined Recognition Arrow -->
+    <path class="arrow-line" marker-end="url(#arrowhead)" d="M 1280, 580 L 1280, 620" stroke-width="3" stroke="#333" />
+    <text x="1290" y="605" class="text-label">Unknown samples →</text>
+    
+    <!-- Unknown Classification -->
+    <rect x="1050" y="620" width="700" height="290" class="container" />
+    <text x="1400" y="650" class="text-title">Unknown Class Discovery (Open-Set)</text>
+    
+    <rect x="1280" y="660" width="240" height="50" class="container" />
+    <text x="1400" y="685" class="text-label">Refined Recognition & Clustering</text>
+    <path d="M 1290 690 l 12 -12 l 12 12 l -12 12 z" fill="#6f42c1" />
+    <path d="M 1320 690 l 18 0 l -9 18 z" transform="rotate(45 1320 690)" fill="#f0ad4e" />
+    <path d="M 1350 690 l 12 0 l 6 12 l -6 12 l -12 0 l -6 -12 z" fill="#888" />
+    <text x="1380" y="700" class="text-small">→ Clustering</text>
+    
+    <!-- Unknown Class 1 -->
+    <ellipse cx="1180" cy="800" rx="90" ry="60" class="dashed-box" stroke="#6f42c1" stroke-width="2.5" />
+    <text x="1180" y="875" class="text-label" fill="#6f42c1" style="font-weight: bold;">Unknown Class 1</text>
+    <path d="M 1170 800 l 12 -12 l 12 12 l -12 12 z" fill="#6f42c1" />
+    <path d="M 1190 780 l 12 -12 l 12 12 l -12 12 z" fill="#6f42c1" />
+    <path d="M 1150 780 l 12 -12 l 12 12 l -12 12 z" fill="#6f42c1" />
+    <path d="M 1210 810 l 12 -12 l 12 12 l -12 12 z" fill="#6f42c1" />
+    <path d="M 1150 820 l 12 -12 l 12 12 l -12 12 z" fill="#6f42c1" />
+    
+    <!-- Unknown Class 2 -->
+    <ellipse cx="1400" cy="800" rx="90" ry="60" class="dashed-box" stroke="#f0ad4e" stroke-width="2.5" />
+    <text x="1400" y="875" class="text-label" fill="#f0ad4e" style="font-weight: bold;">Unknown Class 2</text>
+    <path d="M 1390 800 l 18 0 l -9 18 z" transform="rotate(45 1390 800)" fill="#f0ad4e" />
+    <path d="M 1410 780 l 18 0 l -9 18 z" transform="rotate(45 1410 780)" fill="#f0ad4e" />
+    <path d="M 1370 780 l 18 0 l -9 18 z" transform="rotate(45 1370 780)" fill="#f0ad4e" />
+    <path d="M 1430 810 l 18 0 l -9 18 z" transform="rotate(45 1430 810)" fill="#f0ad4e" />
+    
+    <!-- Unknown Class 3 -->
+    <ellipse cx="1620" cy="800" rx="80" ry="55" class="dashed-box" stroke="#888" stroke-width="2.5" />
+    <text x="1620" y="870" class="text-label" fill="#888" style="font-weight: bold;">Unknown Class 3</text>
+    <path d="M 1610 800 l 12 0 l 6 12 l -6 12 l -12 0 l -6 -12 z" fill="#888" />
+    <path d="M 1630 780 l 12 0 l 6 12 l -6 12 l -12 0 l -6 -12 z" fill="#888" />
+    <path d="M 1650 810 l 12 0 l 6 12 l -6 12 l -12 0 l -6 -12 z" fill="#888" />
+    <path d="M 1590 810 l 12 0 l 6 12 l -6 12 l -12 0 l -6 -12 z" fill="#888" />
+  </g>
+
+  <!-- Legend - Reorganized in two rows for better readability -->
+  <g id="legend">
+    <!-- Background -->
+    <rect x="50" y="920" width="1700" height="70" fill="#f0f0f0" stroke="#333" stroke-width="1.5" rx="5" />
+    
+    <!-- Row 1 -->
+    <rect x="80" y="935" width="70" height="25" class="box" />
+    <text x="115" y="952" class="text-small">GAP</text>
+    <text x="160" y="952" class="text-legend">Global Average Pooling</text>
+
+    <circle cx="425" cy="947" r="12" class="box" />
+    <text x="425" y="952" class="text-small">⊕</text>
+    <text x="450" y="952" class="text-legend">Concatenate</text>
+
+    <rect x="640" y="935" width="35" height="25" class="box" />
+    <text x="657" y="952" class="text-small">F</text>
+    <text x="685" y="952" class="text-legend">Flatten</text>
+
+    <rect x="850" y="935" width="35" height="25" class="box" />
+    <text x="867" y="952" class="text-small">SA</text>
+    <text x="895" y="952" class="text-legend">Self-Attention</text>
+    
+    <rect x="1080" y="935" width="35" height="25" class="box" />
+    <text x="1097" y="952" class="text-small">PE</text>
+    <text x="1125" y="952" class="text-legend">Position Encoding</text>
+    
+    <!-- Row 2 - Abbreviations -->
+    <text x="80" y="975" class="text-legend" style="font-style: italic;">DCLs: Dilated Convolutional Layers</text>
+    <text x="450" y="975" class="text-legend" style="font-style: italic;">MNLs: Multi-layer Nonlinear Layers</text>
+    <text x="850" y="975" class="text-legend" style="font-style: italic;">STFT: Short-Time Fourier Transform</text>
+    <text x="1250" y="975" class="text-legend" style="font-style: italic;">TFS: Time-Frequency Spectrum</text>
+  </g>
+
+</svg>

@@ -1,0 +1,50 @@
+data:
+  train_list: D:\Exp\Model\DSFNet-Output\FCS_0_200_ex1314_json\train_list_fcs.txt
+  val_list: D:\Exp\Model\DSFNet-Output\FCS_0_200_ex1314_json\val_list_fcs.txt
+  num_classes: 22
+  smnet_preproc: true
+  edge_high: null
+  edge_low: null
+  edge_high_pct: null
+  edge_low_pct: null
+  corner_high: null
+  corner_low: null
+  corner_high_pct: null
+  corner_low_pct: null
+  harris_k: 0.04
+  spec_norm_mode: fixed-128
+  posenc_scale: 0.0
+  strict_val: false
+model:
+  backbone_type: swin
+  pretrained: false
+  checkpoint: ''
+  num_anchors: 3
+  head_out_up: 3
+  pfaware_gate_target: 1.0
+train:
+  epochs: 30
+  batch_size: 4
+  seed: 3407
+  amp: true
+  num_workers: 0
+  lr: 0.001
+  exclude_classes:
+  - 13
+  - 14
+  conf_thresh: 0.05
+  loss:
+    hm: 1.0
+    wh: 0.3
+    'off': 1.0
+decode:
+  scales: p2,p3
+  disable_curriculum: true
+  conf: 0.03
+  topk: 80
+  min_wh: 2.0
+  nms: 0.5
+  max_wh_p2: 96.0
+  max_wh_p3: 256.0
+  max_wh_p4: 512.0
+run_dir: D:\Exp\Model\DSFNet-Output\CLS_0_200_ex1314\Det-B0-20251028-2338

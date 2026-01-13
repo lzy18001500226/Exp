@@ -1,0 +1,106 @@
+我不知道现在我们的工作是不是没有用，如果模型本身设计的有问题的话，那再怎么微调效果也是不会好的，看看做的什么样子可以及时止损，因为三天了，好不容易把全是0的问题解决掉，但是参数一直很差
+
+(dronerfa) PS C:\Users\HP\Desktop\Exp\TSFNet\src> python train_det.py --eval_only --eval_ckpt "C:\Users\HP\Desktop\Exp\Model\Output\50标签训练5\last.pt" --score_thr 0.56 --eval_nms 0.6 --eval_max_dets 50 --eval_load_raw --eval_disable_cascade
+[Sanity] Val GT images with boxes: 242/370 | total boxes: 1613
+Train images: 1484 | Batches/epoch: 742 | Val images: 370
+Loaded MobileNetV3-Large features from C:\Users\HP\Desktop\Exp\Model\Pretrain\Backbone\Position\mobilenet_v3_large-8738ca79.pth
+Loaded Swin-S stage4 weights from C:\Users\HP\Desktop\Exp\Model\Pretrain\Swin\pth\swin_small_patch4_window7_224.pth
+Warn: failed to map YOLOv8 convs from C:\Users\HP\Desktop\Exp\Model\Pretrain\Backbone\Texture\yolov8m-cls.pt: Weights only load failed. This file can still be loaded, to do so you have two options, do those steps only if you trust the source of the checkpoint.
+(1) Re-running torch.load with weights_only set to False will likely succeed, but it can result in arbitrary code execution. Do it only if you got the file from a trusted source.
+(2) Alternatively, to load with weights_only=True please check the recommended steps in the following error message.
+WeightsUnpickler error: Unsupported global: GLOBAL ultralytics.nn.tasks.ClassificationModel was not an allowed global by default. Please use torch.serialization.add_safe_globals([ClassificationModel]) to allowlist this global if you trust this class/function.
+
+Check the documentation of torch.load to learn more about types accepted by default with weights_only https://pytorch.org/docs/stable/generated/torch.load.html.
+Two-stream DET configured: small anchors + relaxed RPN/ROI for small objects (P3–P5).
+C:\Users\HP\Desktop\Exp\TSFNet\src\train_det.py:1147: FutureWarning: You are using torch.load with weights_only=False (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for weights_only will be flipped to True. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via torch.serialization.add_safe_globals. We recommend you start setting weights_only=True for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+sd = torch.load(ckpt_path, map_location=device)
+[Load] loaded=614 skipped=0 missing=0
+Eval: 100%|#######################################################| 185/185 [00:48<00:00, 3.82it/s]
+Eval thr=0.560 | P 49.94 R 51.15 F1 50.54
+Best@thr=0.560 -> P 49.94 R 51.15 F1 50.54
+(dronerfa) PS C:\Users\HP\Desktop\Exp\TSFNet\src> python train_det.py --eval_only --eval_ckpt "C:\Users\HP\Desktop\Exp\Model\Output\50标签训练5\last.pt" --score_thr 0.56 --eval_nms 0.7 --eval_max_dets 30 --eval_load_raw --eval_disable_cascade
+D:\Dev\Anaconda\envs\dronerfa\lib\site-packages\albumentations\check_version.py:147: UserWarning: Error fetching version info <urlopen error _ssl.c:1000: The handshake operation timed out>
+data = fetch_version_info()
+[Sanity] Val GT images with boxes: 242/370 | total boxes: 1613
+Train images: 1484 | Batches/epoch: 742 | Val images: 370
+Loaded MobileNetV3-Large features from C:\Users\HP\Desktop\Exp\Model\Pretrain\Backbone\Position\mobilenet_v3_large-8738ca79.pth
+Loaded Swin-S stage4 weights from C:\Users\HP\Desktop\Exp\Model\Pretrain\Swin\pth\swin_small_patch4_window7_224.pth
+Warn: failed to map YOLOv8 convs from C:\Users\HP\Desktop\Exp\Model\Pretrain\Backbone\Texture\yolov8m-cls.pt: Weights only load failed. This file can still be loaded, to do so you have two options, do those steps only if you trust the source of the checkpoint.
+(1) Re-running torch.load with weights_only set to False will likely succeed, but it can result in arbitrary code execution. Do it only if you got the file from a trusted source.
+(2) Alternatively, to load with weights_only=True please check the recommended steps in the following error message.
+WeightsUnpickler error: Unsupported global: GLOBAL ultralytics.nn.tasks.ClassificationModel was not an allowed global by default. Please use torch.serialization.add_safe_globals([ClassificationModel]) to allowlist this global if you trust this class/function.
+
+Check the documentation of torch.load to learn more about types accepted by default with weights_only https://pytorch.org/docs/stable/generated/torch.load.html.
+Two-stream DET configured: small anchors + relaxed RPN/ROI for small objects (P3–P5).
+C:\Users\HP\Desktop\Exp\TSFNet\src\train_det.py:1147: FutureWarning: You are using torch.load with weights_only=False (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for weights_only will be flipped to True. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via torch.serialization.add_safe_globals. We recommend you start setting weights_only=True for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+sd = torch.load(ckpt_path, map_location=device)
+[Load] loaded=614 skipped=0 missing=0
+Eval: 100%|#######################################################| 185/185 [00:21<00:00, 8.44it/s]
+Eval thr=0.560 | P 40.20 R 55.55 F1 46.64
+Best@thr=0.560 -> P 40.20 R 55.55 F1 46.64
+(dronerfa) PS C:\Users\HP\Desktop\Exp\TSFNet\src> python train_det.py --resume --out_dir "C:\Users\HP\Desktop\Exp\Model\Output\50标签训练5" --epochs 150 --score_thr 0.56 --eval_nms 0.6 --eval_max_dets 50 --cosine --warmup_epochs 1 --ema --ema_update_every 4 --ema_eval_min_updates 99999 --no_early_relax --kd_feat --kd_alpha 0.7 --kd_warmup_epochs 3 --clip_grad 1.0 --eval_log_interval -1
+D:\Dev\Anaconda\envs\dronerfa\lib\site-packages\albumentations\check_version.py:147: UserWarning: Error fetching version info <urlopen error _ssl.c:1000: The handshake operation timed out>
+data = fetch_version_info()
+[Sanity] Val GT images with boxes: 242/370 | total boxes: 1613
+Train images: 1484 | Batches/epoch: 742 | Val images: 370
+Loaded MobileNetV3-Large features from C:\Users\HP\Desktop\Exp\Model\Pretrain\Backbone\Position\mobilenet_v3_large-8738ca79.pth
+Loaded Swin-S stage4 weights from C:\Users\HP\Desktop\Exp\Model\Pretrain\Swin\pth\swin_small_patch4_window7_224.pth
+Warn: failed to map YOLOv8 convs from C:\Users\HP\Desktop\Exp\Model\Pretrain\Backbone\Texture\yolov8m-cls.pt: Weights only load failed. This file can still be loaded, to do so you have two options, do those steps only if you trust the source of the checkpoint.
+(1) Re-running torch.load with weights_only set to False will likely succeed, but it can result in arbitrary code execution. Do it only if you got the file from a trusted source.
+(2) Alternatively, to load with weights_only=True please check the recommended steps in the following error message.
+WeightsUnpickler error: Unsupported global: GLOBAL ultralytics.nn.tasks.ClassificationModel was not an allowed global by default. Please use torch.serialization.add_safe_globals([ClassificationModel]) to allowlist this global if you trust this class/function.
+
+Check the documentation of torch.load to learn more about types accepted by default with weights_only https://pytorch.org/docs/stable/generated/torch.load.html.
+Two-stream DET configured: small anchors + relaxed RPN/ROI for small objects (P3–P5).
+C:\Users\HP\Desktop\Exp\TSFNet\src\train_det.py:843: FutureWarning: You are using torch.load with weights_only=False (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for weights_only will be flipped to True. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via torch.serialization.add_safe_globals. We recommend you start setting weights_only=True for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+sd = torch.load(ckpt, map_location='cpu')
+C:\Users\HP\Desktop\Exp\TSFNet\src\train_det.py:1258: FutureWarning: You are using torch.load with weights_only=False (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for weights_only will be flipped to True. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via torch.serialization.add_safe_globals. We recommend you start setting weights_only=True for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+ckpt = torch.load(ckpt_path, map_location='cpu')
+[Load] loaded=614 skipped=0 missing=0
+[Load] loaded=614 skipped=0 missing=0
+[Resume] Loaded checkpoint: C:\Users\HP\Desktop\Exp\Model\Output\50标签训练5\last.pt | start_epoch=49
+Train 50/150: 0%| | 0/742 [00:00<?, ?it/s]D:\Dev\Anaconda\envs\dronerfa\lib\site-packages\albumentations\core\validation.py:114: UserWarning: ShiftScaleRotate is a special case of Affine transform. Please use Affine transform instead.
+#####| 742/742 [02:13<00:00, 5.56it/s]
+Epoch 50/150 | loss 0.1052 | P 47.18 R 51.27 F1 49.14
+Train 51/150: 100%|###############################################| 742/742 [02:00<00:00, 6.13it/s]
+Epoch 51/150 | loss 0.1068 | P 47.47 R 51.83 F1 49.56
+Train 52/150: 100%|###############################################| 742/742 [02:00<00:00, 6.16it/s]
+Epoch 52/150 | loss 0.1050 | P 50.87 R 56.23 F1 53.42
+Train 53/150: 100%|###############################################| 742/742 [02:08<00:00, 5.79it/s]
+Epoch 53/150 | loss 0.1043 | P 47.82 R 55.86 F1 51.53
+Train 54/150: 100%|###############################################| 742/742 [02:01<00:00, 6.13it/s]
+Epoch 54/150 | loss 0.1022 | P 49.85 R 60.45 F1 54.64
+Train 55/150: 15%|######9 | 109/742 [00:17<01:41, 6.21it/s]
+
+你的担心合理。为尽快判断“继续投入是否有价值”，我做了两件事：
+
+增加了去风险的训练控制：--kd_stop_epoch（到某轮自动关闭蒸馏）、EarlyStopping（按F1早停）、Cosine重启（可跳出平台）。
+不改结构先验证上限：固定评估配置下扫阈值与复现分数，避免“评估设置漂移”造成的错觉。
+已改内容（脚本已更新）
+
+新增参数：
+--kd_stop_epoch N：第N轮后不再叠加KD损失（默认关闭）。
+--early_stop + --early_stop_patience 15 --early_stop_min_delta 0.1 --early_stop_warmup 15：F1长期无改善自动停止。
+--cosine_restarts + --cosine_T0 10 --cosine_Tmult 2：使用 CosineAnnealingWarmRestarts。
+KD权重生效逻辑：kd_weight = kd_alpha * warmup_ramp，超过 kd_stop_epoch 自动变 0；已在 AMP/非AMP 两路都处理。
+训练循环改为支持早停，触发时直接 break。
+快速结论路径（建议优先跑，最多1小时得结论）
+
+评估基线（raw，固定配置）：
+python train_det.py --eval_only --eval_ckpt "C:\Users\HP\Desktop\Exp\Model\Output\50标签训练5\last.pt" --score_thr 0.56 --eval_nms 0.6 --eval_max_dets 50 --eval_load_raw --eval_disable_cascade
+这一步你已跑到约 F1 50.5，作为可比基线。
+续训“止损版”（若2~3轮不涨则自动停）：
+python train_det.py --resume --out_dir "C:\Users\HP\Desktop\Exp\Model\Output\50标签训练5" --epochs 150 --score_thr 0.56 --eval_nms 0.6 --eval_max_dets 50 --cosine_restarts --cosine_T0 10 --cosine_Tmult 2 --warmup_epochs 1 --ema --ema_update_every 4 --ema_eval_min_updates 99999 --no_early_relax --kd_feat --kd_alpha 0.5 --kd_warmup_epochs 3 --kd_stop_epoch 60 --clip_grad 1.0 --early_stop --early_stop_patience 6 --early_stop_min_delta 0.2 --early_stop_warmup 5 --eval_log_interval -1
+预期：若结构可学，再给几个周期通常能回到或超过先前峰值；若持续不涨，早停会尽快退出，避免继续消耗。
+若仍不升（结构上限判断）
+我建议做一次“上限探测”：
+开启级联+TTA，仅评估：
+python ...\train_det.py --eval_only --eval_ckpt "...\best.pt" --score_thr 0.56 --eval_nms 0.6 --eval_max_dets 50 --eval_tta_hflip
+若带级联/TTA仍难过 F1≈55，说明当前两流结构上限接近，继续微调性价比低。
+下一步的结构性建议（仅在上限低确认后再做）
+
+简化为单干骨（Swin-S FPN）+ 改进RPN锚尺度，去掉MobileNet位置流，减少冲突。
+或保留两流但用共享FPN+轻量BiFPN，统一特征分辨率，避免对小目标的回归分散。
+训练侧：关闭KD或将 kd_alpha≤0.3，并只在前20轮启用（kd_stop_epoch 20）。
+你先按“止损版”跑3–6轮观察。如果 F1仍回不到先前的55±，我建议暂停当前结构，转“单干骨+FPN”的小改版，我可以直接给出最小改动清单。
+

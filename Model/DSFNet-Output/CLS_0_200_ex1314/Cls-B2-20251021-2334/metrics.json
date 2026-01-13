@@ -1,0 +1,7 @@
+{
+  "best_epoch": 15,
+  "best_loss": 0.031819537814598134,
+  "best_acc": 0.9840909090909091,
+  "has_val": true,
+  "run_dir": "C:\\Users\\HP\\Desktop\\Exp\\Model\\DSFNet-Output\\CLS_0_200_ex1314\\Run-B2-20251021-2334"
+}

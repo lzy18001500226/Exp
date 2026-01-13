@@ -1,0 +1,22 @@
+data:
+  train_list: C:\Users\HP\Desktop\Exp\Model\DSFNet-Output\FCS_VTS_0_200_ex1314\train_list_fcs.txt
+  val_list: C:\Users\HP\Desktop\Exp\Model\DSFNet-Output\FCS_VTS_0_200_ex1314\val_list_fcs.txt
+  vts_list: C:\Users\HP\Desktop\Exp\Model\DSFNet-Output\FCS_VTS_0_200_ex1314\train_list_vts.txt
+  vts_val_list: C:\Users\HP\Desktop\Exp\Model\DSFNet-Output\FCS_VTS_0_200_ex1314\val_list_vts.txt
+  stats_fcs: ''
+  stats_vts: ''
+  num_classes: 22
+model:
+  mode: concat
+  backbone_type: swin
+  embed_dim: 512
+train:
+  epochs: 40
+  batch_size: 2
+  seed: 3407
+  amp: true
+  num_workers: 0
+  save_interval: 1
+  backbone_lr: 3.0e-05
+  head_lr: 0.003
+run_dir: C:\Users\HP\Desktop\Exp\Model\DSFNet-Output\CLS_0_200_ex1314\Run-B2-20251021-2334

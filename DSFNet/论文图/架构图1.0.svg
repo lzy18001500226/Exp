@@ -1,0 +1,453 @@
+<svg viewBox="0 0 1800 1100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- 渐变定义 -->
+    <linearGradient id="convGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4CAF50;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2E7D32;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="convGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFC107;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#F57C00;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="fusionGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FF9800;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#E65100;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- 阴影滤镜 -->
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="4"/>
+      <feOffset dx="3" dy="3" result="offsetblur"/>
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.35"/>
+      </feComponentTransfer>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    
+    <!-- 箭头标记 -->
+    <marker id="arrowhead" markerWidth="12" markerHeight="12" refX="10" refY="4" orient="auto">
+      <polygon points="0 0, 12 4, 0 8" fill="#333"/>
+    </marker>
+    
+    <marker id="arrowhead-green" markerWidth="12" markerHeight="12" refX="10" refY="4" orient="auto">
+      <polygon points="0 0, 12 4, 0 8" fill="#2E7D32"/>
+    </marker>
+    
+    <marker id="arrowhead-orange" markerWidth="12" markerHeight="12" refX="10" refY="4" orient="auto">
+      <polygon points="0 0, 12 4, 0 8" fill="#F57C00"/>
+    </marker>
+  </defs>
+  
+  <!-- 背景 -->
+  <rect width="1800" height="1100" fill="#fafafa"/>
+  
+  <!-- 标题 -->
+  <text x="900" y="45" font-family="SimSun, STSong, serif" font-size="32" font-weight="bold" text-anchor="middle" fill="#1a237e">
+    双流自适应鲁棒融合网络架构
+  </text>
+  <text x="900" y="75" font-family="SimSun, STSong, serif" font-size="16" text-anchor="middle" fill="#5c6bc0">
+    DroneRFb-Spectra 时频谱图分类系统
+  </text>
+  
+  <!-- ========== 第一部分：输入层 ========== -->
+  <g id="input-section">
+    <!-- 数据增强模块 -->
+    <g transform="translate(50, 120)">
+      <rect x="0" y="0" width="200" height="320" rx="10" fill="#E8EAF6" stroke="#3F51B5" stroke-width="3" filter="url(#shadow)"/>
+      <text x="100" y="35" font-family="SimSun, STSong, serif" font-size="20" font-weight="bold" text-anchor="middle" fill="#1a237e">数据增强</text>
+      <line x1="20" y1="48" x2="180" y2="48" stroke="#3F51B5" stroke-width="2"/>
+      
+      <!-- 原始信号可视化 -->
+      <rect x="20" y="60" width="160" height="90" fill="#fff" stroke="#5c6bc0" stroke-width="2" rx="4"/>
+      <path d="M 35 105 Q 70 75, 105 105 T 175 105" fill="none" stroke="#2196F3" stroke-width="3"/>
+      <path d="M 35 115 Q 70 140, 105 115 T 175 115" fill="none" stroke="#FF5722" stroke-width="3"/>
+      <text x="100" y="168" font-family="SimSun, STSong, serif" font-size="14" text-anchor="middle" fill="#424242">原始时频谱图</text>
+      
+      <!-- 增强操作列表 -->
+      <text x="20" y="200" font-family="SimSun, STSong, serif" font-size="15" font-weight="bold" fill="#1a237e">增强操作：</text>
+      <text x="20" y="225" font-family="SimSun, STSong, serif" font-size="13">● 背景混合 α∈[0.1,0.3]</text>
+      <text x="20" y="248" font-family="SimSun, STSong, serif" font-size="13">● 多普勒模拟 ±10MHz</text>
+      <text x="20" y="271" font-size="13" font-family="SimSun, STSong, serif">● 时间拉伸 ±10%</text>
+      <text x="20" y="294" font-size="13" font-family="SimSun, STSong, serif">● 高斯噪声 SNR 10-30dB</text>
+      <text x="100" y="315" font-family="SimSun, STSong, serif" font-size="12" text-anchor="middle" fill="#d32f2f" font-style="italic">(训练时在线应用)</text>
+    </g>
+    
+    <!-- FCS输入 -->
+    <g transform="translate(290, 120)">
+      <rect x="0" y="0" width="180" height="150" rx="8" fill="#E8F5E9" stroke="#2E7D32" stroke-width="3" filter="url(#shadow)"/>
+      <text x="90" y="32" font-family="SimSun, STSong, serif" font-size="20" font-weight="bold" text-anchor="middle" fill="#2E7D32">FCS 输入</text>
+      
+      <!-- 时频谱图可视化 -->
+      <rect x="20" y="48" width="140" height="70" fill="#fff" stroke="#2E7D32" stroke-width="2" rx="3"/>
+      <g opacity="0.8">
+        <rect x="28" y="54" width="12" height="58" fill="#4CAF50"/>
+        <rect x="44" y="58" width="12" height="54" fill="#8BC34A"/>
+        <rect x="60" y="62" width="12" height="50" fill="#CDDC39"/>
+        <rect x="76" y="56" width="12" height="56" fill="#FFEB3B"/>
+        <rect x="92" y="66" width="12" height="46" fill="#FFC107"/>
+        <rect x="108" y="60" width="12" height="52" fill="#FF9800"/>
+        <rect x="124" y="64" width="12" height="48" fill="#FF5722"/>
+        <rect x="140" y="70" width="12" height="42" fill="#F44336"/>
+      </g>
+      <text x="90" y="135" font-family="Times New Roman, serif" font-size="14" font-weight="bold" text-anchor="middle">[512×512×1]</text>
+      <text x="90" y="148" font-family="SimSun, STSong, serif" font-size="11" text-anchor="middle" fill="#d32f2f">短时跳频信号</text>
+    </g>
+    
+    <!-- VTS输入 -->
+    <g transform="translate(290, 290)">
+      <rect x="0" y="0" width="180" height="150" rx="8" fill="#FFF8E1" stroke="#F57C00" stroke-width="3" filter="url(#shadow)"/>
+      <text x="90" y="32" font-family="SimSun, STSong, serif" font-size="20" font-weight="bold" text-anchor="middle" fill="#F57C00">VTS 输入</text>
+      
+      <!-- 时频谱图可视化 -->
+      <rect x="20" y="48" width="140" height="70" fill="#fff" stroke="#F57C00" stroke-width="2" rx="3"/>
+      <g opacity="0.8">
+        <rect x="28" y="58" width="30" height="54" fill="#FFE082"/>
+        <rect x="62" y="54" width="30" height="58" fill="#FFD54F"/>
+        <rect x="96" y="62" width="30" height="50" fill="#FFCA28"/>
+        <rect x="130" y="60" width="22" height="52" fill="#FFC107"/>
+      </g>
+      <text x="90" y="135" font-family="Times New Roman, serif" font-size="14" font-weight="bold" text-anchor="middle">[512×512×1]</text>
+      <text x="90" y="148" font-family="SimSun, STSong, serif" font-size="11" text-anchor="middle" fill="#d32f2f">宽带稳定信号</text>
+      
+      <!-- 虚线框表示可选 -->
+      <rect x="4" y="4" width="172" height="142" rx="8" fill="none" stroke="#999" stroke-width="2" stroke-dasharray="8,6"/>
+      <text x="90" y="168" font-family="SimSun, STSong, serif" font-size="11" text-anchor="middle" fill="#666">(缺失时零填充)</text>
+    </g>
+    
+    <!-- 连接箭头 -->
+    <path d="M 250 220 L 290 195" stroke="#3F51B5" stroke-width="3" fill="none" marker-end="url(#arrowhead)"/>
+    <path d="M 250 280 L 290 345" stroke="#3F51B5" stroke-width="3" fill="none" marker-end="url(#arrowhead)"/>
+  </g>
+  
+  <!-- ========== 第二部分：双流骨干网络 ========== -->
+  <!-- FCS流 - Swin Transformer -->
+  <g id="fcs-backbone" transform="translate(520, 120)">
+    <rect x="0" y="0" width="320" height="150" rx="10" fill="#E8F5E9" stroke="#2E7D32" stroke-width="3" filter="url(#shadow)"/>
+    <text x="160" y="28" font-family="SimSun, STSong, serif" font-size="19" font-weight="bold" text-anchor="middle" fill="#1B5E20">Swin Transformer 骨干网络</text>
+    <text x="160" y="48" font-family="SimSun, STSong, serif" font-size="13" text-anchor="middle" fill="#2E7D32">窗口注意力机制 | Patch划分 4×4</text>
+    
+    <!-- 4个阶段的3D卷积层可视化 -->
+    <g transform="translate(20, 60)">
+      <!-- Stage 1 -->
+      <g>
+        <polygon points="0,50 18,38 85,38 67,50" fill="#81C784" stroke="#2E7D32" stroke-width="1.5"/>
+        <polygon points="85,38 85,78 67,90 67,50" fill="#66BB6A" stroke="#2E7D32" stroke-width="1.5"/>
+        <polygon points="0,50 0,90 67,90 67,50" fill="#4CAF50" stroke="#2E7D32" stroke-width="1.5"/>
+        <text x="33" y="75" font-family="SimSun, STSong, serif" font-size="11" text-anchor="middle" fill="#fff" font-weight="bold">S1</text>
+        <text x="33" y="108" font-family="Times New Roman, serif" font-size="10" text-anchor="middle" font-weight="bold">128³×128</text>
+      </g>
+      
+      <!-- Stage 2 -->
+      <g transform="translate(95, 8)">
+        <polygon points="0,50 15,40 70,40 55,50" fill="#66BB6A" stroke="#2E7D32" stroke-width="1.5"/>
+        <polygon points="70,40 70,75 55,85 55,50" fill="#4CAF50" stroke="#2E7D32" stroke-width="1.5"/>
+        <polygon points="0,50 0,85 55,85 55,50" fill="#43A047" stroke="#2E7D32" stroke-width="1.5"/>
+        <text x="27" y="70" font-family="SimSun, STSong, serif" font-size="11" text-anchor="middle" fill="#fff" font-weight="bold">S2</text>
+        <text x="27" y="100" font-family="Times New Roman, serif" font-size="10" text-anchor="middle" font-weight="bold">64²×256</text>
+      </g>
+      
+      <!-- Stage 3 -->
+      <g transform="translate(175, 18)">
+        <polygon points="0,50 12,42 55,42 43,50" fill="#4CAF50" stroke="#2E7D32" stroke-width="1.5"/>
+        <polygon points="55,42 55,72 43,80 43,50" fill="#43A047" stroke="#2E7D32" stroke-width="1.5"/>
+        <polygon points="0,50 0,80 43,80 43,50" fill="#388E3C" stroke="#2E7D32" stroke-width="1.5"/>
+        <text x="22" y="68" font-family="SimSun, STSong, serif" font-size="11" text-anchor="middle" fill="#fff" font-weight="bold">S3</text>
+        <text x="22" y="95" font-family="Times New Roman, serif" font-size="10" text-anchor="middle" font-weight="bold">32²×512</text>
+      </g>
+      
+      <!-- Stage 4 -->
+      <g transform="translate(240, 28)">
+        <polygon points="0,50 10,44 45,44 35,50" fill="#43A047" stroke="#2E7D32" stroke-width="1.5"/>
+        <polygon points="45,44 45,69 35,75 35,50" fill="#388E3C" stroke="#2E7D32" stroke-width="1.5"/>
+        <polygon points="0,50 0,75 35,75 35,50" fill="#2E7D32" stroke="#2E7D32" stroke-width="1.5"/>
+        <text x="18" y="65" font-family="SimSun, STSong, serif" font-size="10" text-anchor="middle" fill="#fff" font-weight="bold">S4</text>
+        <text x="18" y="90" font-family="Times New Roman, serif" font-size="9" text-anchor="middle" font-weight="bold">16²×1024</text>
+      </g>
+    </g>
+  </g>
+  
+  <!-- VTS流 - ConvNeXt -->
+  <g id="vts-backbone" transform="translate(520, 290)">
+    <rect x="0" y="0" width="320" height="150" rx="10" fill="#FFF8E1" stroke="#F57C00" stroke-width="3" filter="url(#shadow)"/>
+    <text x="160" y="28" font-family="SimSun, STSong, serif" font-size="19" font-weight="bold" text-anchor="middle" fill="#E65100">ConvNeXt 骨干网络</text>
+    <text x="160" y="48" font-family="SimSun, STSong, serif" font-size="13" text-anchor="middle" fill="#F57C00">深度可分离卷积 7×7 | LayerNorm</text>
+    
+    <!-- 4个阶段的3D卷积层可视化 -->
+    <g transform="translate(20, 60)">
+      <!-- Stage 1 -->
+      <g>
+        <polygon points="0,50 18,38 85,38 67,50" fill="#FFE082" stroke="#F57C00" stroke-width="1.5"/>
+        <polygon points="85,38 85,78 67,90 67,50" fill="#FFD54F" stroke="#F57C00" stroke-width="1.5"/>
+        <polygon points="0,50 0,90 67,90 67,50" fill="#FFCA28" stroke="#F57C00" stroke-width="1.5"/>
+        <text x="33" y="75" font-family="SimSun, STSong, serif" font-size="11" text-anchor="middle" fill="#fff" font-weight="bold">S1</text>
+        <text x="33" y="108" font-family="Times New Roman, serif" font-size="10" text-anchor="middle" font-weight="bold">128³×128</text>
+      </g>
+      
+      <!-- Stage 2 -->
+      <g transform="translate(95, 8)">
+        <polygon points="0,50 15,40 70,40 55,50" fill="#FFD54F" stroke="#F57C00" stroke-width="1.5"/>
+        <polygon points="70,40 70,75 55,85 55,50" fill="#FFCA28" stroke="#F57C00" stroke-width="1.5"/>
+        <polygon points="0,50 0,85 55,85 55,50" fill="#FFC107" stroke="#F57C00" stroke-width="1.5"/>
+        <text x="27" y="70" font-family="SimSun, STSong, serif" font-size="11" text-anchor="middle" fill="#fff" font-weight="bold">S2</text>
+        <text x="27" y="100" font-family="Times New Roman, serif" font-size="10" text-anchor="middle" font-weight="bold">64²×256</text>
+      </g>
+      
+      <!-- Stage 3 -->
+      <g transform="translate(175, 18)">
+        <polygon points="0,50 12,42 55,42 43,50" fill="#FFCA28" stroke="#F57C00" stroke-width="1.5"/>
+        <polygon points="55,42 55,72 43,80 43,50" fill="#FFC107" stroke="#F57C00" stroke-width="1.5"/>
+        <polygon points="0,50 0,80 43,80 43,50" fill="#FFB300" stroke="#F57C00" stroke-width="1.5"/>
+        <text x="22" y="68" font-family="SimSun, STSong, serif" font-size="11" text-anchor="middle" fill="#fff" font-weight="bold">S3</text>
+        <text x="22" y="95" font-family="Times New Roman, serif" font-size="10" text-anchor="middle" font-weight="bold">32²×512</text>
+      </g>
+      
+      <!-- Stage 4 -->
+      <g transform="translate(240, 28)">
+        <polygon points="0,50 10,44 45,44 35,50" fill="#FFC107" stroke="#F57C00" stroke-width="1.5"/>
+        <polygon points="45,44 45,69 35,75 35,50" fill="#FFB300" stroke="#F57C00" stroke-width="1.5"/>
+        <polygon points="0,50 0,75 35,75 35,50" fill="#FFA000" stroke="#F57C00" stroke-width="1.5"/>
+        <text x="18" y="65" font-family="SimSun, STSong, serif" font-size="10" text-anchor="middle" fill="#fff" font-weight="bold">S4</text>
+        <text x="18" y="90" font-family="Times New Roman, serif" font-size="9" text-anchor="middle" font-weight="bold">16²×1024</text>
+      </g>
+    </g>
+  </g>
+  
+  <!-- 箭头：输入到骨干 -->
+  <path d="M 470 195 L 520 195" stroke="#2E7D32" stroke-width="3.5" marker-end="url(#arrowhead-green)"/>
+  <path d="M 470 365 L 520 365" stroke="#F57C00" stroke-width="3.5" marker-end="url(#arrowhead-orange)"/>
+  
+  <!-- ========== 第三部分：FPN特征金字塔 ========== -->
+  <g id="fpn" transform="translate(880, 150)">
+    <rect x="0" y="0" width="150" height="260" rx="10" fill="#FFE0B2" stroke="#E65100" stroke-width="3" filter="url(#shadow)"/>
+    <text x="75" y="30" font-family="SimSun, STSong, serif" font-size="20" font-weight="bold" text-anchor="middle" fill="#BF360C">FPN</text>
+    <text x="75" y="52" font-family="SimSun, STSong, serif" font-size="14" text-anchor="middle" fill="#E65100">特征金字塔网络</text>
+    
+    <!-- 金字塔可视化 -->
+    <g transform="translate(75, 80)">
+      <!-- 顶层 - 小 -->
+      <polygon points="-40,0 40,0 30,18 -30,18" fill="#FFAB91" stroke="#E65100" stroke-width="1.5"/>
+      <polygon points="40,0 40,15 30,33 30,18" fill="#FF8A65" stroke="#E65100" stroke-width="1.5"/>
+      <polygon points="-40,0 -40,15 -30,33 -30,18" fill="#FF7043" stroke="#E65100" stroke-width="1.5"/>
+      <text x="0" y="26" font-family="Times New Roman, serif" font-size="10" text-anchor="middle" fill="#fff" font-weight="bold">16²×1024</text>
+      
+      <!-- 中层 - 中 -->
+      <polygon points="-48,60 48,60 38,82 -38,82" fill="#FFB74D" stroke="#E65100" stroke-width="1.5"/>
+      <polygon points="48,60 48,78 38,100 38,82" fill="#FFA726" stroke="#E65100" stroke-width="1.5"/>
+      <polygon points="-48,60 -48,78 -38,100 -38,82" fill="#FF9800" stroke="#E65100" stroke-width="1.5"/>
+      <text x="0" y="88" font-family="Times New Roman, serif" font-size="10" text-anchor="middle" fill="#fff" font-weight="bold">32²×512</text>
+      
+      <!-- 底层 - 大 -->
+      <polygon points="-55,125 55,125 45,150 -45,150" fill="#FFCC80" stroke="#E65100" stroke-width="1.5"/>
+      <polygon points="55,125 55,145 45,170 45,150" fill="#FFB74D" stroke="#E65100" stroke-width="1.5"/>
+      <polygon points="-55,125 -55,145 -45,170 -45,150" fill="#FFA726" stroke="#E65100" stroke-width="1.5"/>
+      <text x="0" y="153" font-family="Times New Roman, serif" font-size="10" text-anchor="middle" fill="#fff" font-weight="bold">64²×256</text>
+    </g>
+    
+    <text x="75" y="245" font-family="SimSun, STSong, serif" font-size="13" text-anchor="middle" fill="#E65100">多尺度对齐融合</text>
+  </g>
+  
+  <!-- 箭头：骨干到FPN -->
+  <path d="M 840 195 L 880 230" stroke="#2E7D32" stroke-width="3.5" marker-end="url(#arrowhead)"/>
+  <text x="855" y="208" font-family="SimSun, STSong, serif" font-size="12" fill="#2E7D32" font-weight="bold">多尺度</text>
+  
+  <path d="M 840 365 L 880 310" stroke="#F57C00" stroke-width="3.5" marker-end="url(#arrowhead)"/>
+  <text x="855" y="342" font-family="SimSun, STSong, serif" font-size="12" fill="#F57C00" font-weight="bold">特征图</text>
+  
+  <!-- ========== 第四部分：跨注意力融合 ========== -->
+  <g id="fusion" transform="translate(1070, 160)">
+    <rect x="0" y="0" width="220" height="240" rx="10" fill="#FFCCBC" stroke="#D84315" stroke-width="3" filter="url(#shadow)"/>
+    <text x="110" y="30" font-family="SimSun, STSong, serif" font-size="20" font-weight="bold" text-anchor="middle" fill="#BF360C">跨注意力融合</text>
+    <text x="110" y="52" font-family="SimSun, STSong, serif" font-size="13" text-anchor="middle" fill="#D84315">Cross-Attention Fusion</text>
+    
+    <!-- 注意力机制可视化 -->
+    <g transform="translate(110, 85)">
+      <!-- Q K V 圆圈 -->
+      <circle cx="-60" cy="0" r="22" fill="#FF8A65" stroke="#D84315" stroke-width="2.5"/>
+      <text x="-60" y="8" font-family="Times New Roman, serif" font-size="18" font-weight="bold" text-anchor="middle" fill="#fff">Q</text>
+      <text x="-60" y="35" font-family="SimSun, STSong, serif" font-size="12" text-anchor="middle" fill="#424242">FCS</text>
+      
+      <circle cx="0" cy="0" r="22" fill="#FF7043" stroke="#D84315" stroke-width="2.5"/>
+      <text x="0" y="8" font-family="Times New Roman, serif" font-size="18" font-weight="bold" text-anchor="middle" fill="#fff">K</text>
+      <text x="0" y="35" font-family="SimSun, STSong, serif" font-size="12" text-anchor="middle" fill="#424242">VTS</text>
+      
+      <circle cx="60" cy="0" r="22" fill="#FF5722" stroke="#D84315" stroke-width="2.5"/>
+      <text x="60" y="8" font-family="Times New Roman, serif" font-size="18" font-weight="bold" text-anchor="middle" fill="#fff">V</text>
+      <text x="60" y="35" font-family="SimSun, STSong, serif" font-size="12" text-anchor="middle" fill="#424242">VTS</text>
+      
+      <!-- 注意力连接线 -->
+      <path d="M -38 0 L -22 0" stroke="#D84315" stroke-width="2.5" marker-end="url(#arrowhead)"/>
+      <path d="M 22 0 L 38 0" stroke="#D84315" stroke-width="2.5" marker-end="url(#arrowhead)"/>
+      
+      <!-- 输出特征 -->
+      <rect x="-50" y="60" width="100" height="45" rx="6" fill="#FF6E40" stroke="#D84315" stroke-width="2"/>
+      <text x="0" y="87" font-family="SimSun, STSong, serif" font-size="14" font-weight="bold" text-anchor="middle" fill="#fff">融合特征</text>
+      
+      <path d="M 0 22 L 0 60" stroke="#D84315" stroke-width="2.5" marker-end="url(#arrowhead)"/>
+    </g>
+    
+    <text x="110" y="175" font-family="SimSun, STSong, serif" font-size="13" text-anchor="middle" fill="#424242">8头多头注意力</text>
+    <text x="110" y="195" font-family="SimSun, STSong, serif" font-size="12" text-anchor="middle" fill="#666">双向交互机制</text>
+    <text x="110" y="220" font-family="SimSun, STSong, serif" font-size="11" text-anchor="middle" fill="#D84315" font-style="italic">VTS缺失时权重自适应归零</text>
+  </g>
+  
+  <!-- 箭头：FPN到融合 -->
+  <path d="M 1030 280 L 1070 280" stroke="#333" stroke-width="3.5" marker-end="url(#arrowhead)"/>
+  
+  <!-- ========== 第五部分：时序Transformer ========== -->
+  <g id="temporal" transform="translate(1330, 180)">
+    <rect x="0" y="0" width="180" height="200" rx="10" fill="#D1C4E9" stroke="#5E35B1" stroke-width="3" filter="url(#shadow)"/>
+    <text x="90" y="28" font-family="SimSun, STSong, serif" font-size="18" font-weight="bold" text-anchor="middle" fill="#4527A0">时序Transformer</text>
+    <text x="90" y="48" font-family="SimSun, STSong, serif" font-size="13" text-anchor="middle" fill="#5E35B1">编码器</text>
+    
+    <!-- Transformer层可视化 -->
+    <g transform="translate(30, 65)">
+      <!-- Layer 1 -->
+      <rect x="0" y="0" width="120" height="45" rx="6" fill="#B39DDB" stroke="#5E35B1" stroke-width="2"/>
+      <text x="60" y="20" font-family="SimSun, STSong, serif" font-size="13" text-anchor="middle" fill="#fff" font-weight="bold">自注意力层 1</text>
+      <text x="60" y="36" font-family="SimSun, STSong, serif" font-size="11" text-anchor="middle" fill="#fff">4头注意力</text>
+      
+      <!-- Layer 2 -->
+      <rect x="0" y="60" width="120" height="45" rx="6" fill="#9575CD" stroke="#5E35B1" stroke-width="2"/>
+      <text x="60" y="80" font-family="SimSun, STSong, serif" font-size="13" text-anchor="middle" fill="#fff" font-weight="bold">自注意力层 2</text>
+      <text x="60" y="96" font-family="SimSun, STSong, serif" font-size="11" text-anchor="middle" fill="#fff">4头注意力</text>
+      
+      <!-- 连接箭头 -->
+      <path d="M 60 45 L 60 60" stroke="#5E35B1" stroke-width="3" marker-end="url(#arrowhead)"/>
+    </g>
+    
+    <text x="90" y="175" font-family="SimSun, STSong, serif" font-size="12" text-anchor="middle" fill="#5E35B1">捕获多普勒效应</text>
+    <text x="90" y="192" font-family="SimSun, STSong, serif" font-size="12" text-anchor="middle" fill="#5E35B1">时序依赖建模</text>
+  </g>
+  
+  <!-- 箭头：融合到时序 -->
+  <path d="M 1290 280 L 1330 280" stroke="#333" stroke-width="3.5" marker-end="url(#arrowhead)"/>
+  
+  <!-- ========== 第六部分：分类头 ========== -->
+  <g id="classifier" transform="translate(1550, 140)">
+    <rect x="0" y="0" width="170" height="280" rx="10" fill="#FCE4EC" stroke="#C2185B" stroke-width="3" filter="url(#shadow)"/>
+    <text x="85" y="28" font-family="SimSun, STSong, serif" font-size="19" font-weight="bold" text-anchor="middle" fill="#880E4F">分类头</text>
+    
+    <!-- 全连接层可视化 -->
+    <g transform="translate(35, 50)">
+      <!-- 全局池化 -->
+      <rect x="0" y="0" width="100" height="35" rx="5" fill="#F8BBD0" stroke="#C2185B" stroke-width="2"/>
+      <text x="50" y="15" font-family="SimSun, STSong, serif" font-size="12" text-anchor="middle" fill="#424242">全局平均</text>
+      <text x="50" y="28" font-family="SimSun, STSong, serif" font-size="12" text-anchor="middle" fill="#424242">池化层</text>
+      
+      <!-- FC1 -->
+      <g transform="translate(0, 50)">
+        <ellipse cx="12" cy="20" rx="10" ry="32" fill="#F48FB1" stroke="#C2185B" stroke-width="1.5"/>
+        <ellipse cx="88" cy="20" rx="10" ry="22" fill="#F06292" stroke="#C2185B" stroke-width="1.5"/>
+        <line x1="22" y1="5" x2="78" y2="8" stroke="#C2185B" stroke-width="0.8"/>
+        <line x1="22" y1="20" x2="78" y2="18" stroke="#C2185B" stroke-width="0.8"/>
+        <line x1="22" y1="35" x2="78" y2="28" stroke="#C2185B" stroke-width="0.8"/>
+        <text x="50" y="-8" font-family="Times New Roman, serif" font-size="11" text-anchor="middle" font-weight="bold">1024→512</text>
+        <text x="50" y="60" font-family="SimSun, STSong, serif" font-size="10" text-anchor="middle">ReLU+Dropout</text>
+      </g>
+      
+      <!-- FC2 -->
+      <g transform="translate(0, 125)">
+        <ellipse cx="12" cy="20" rx="10" ry="22" fill="#EC407A" stroke="#C2185B" stroke-width="1.5"/>
+        <ellipse cx="88" cy="20" rx="10" ry="15" fill="#E91E63" stroke="#C2185B" stroke-width="1.5"/>
+        <line x1="22" y1="8" x2="78" y2="10" stroke="#C2185B" stroke-width="0.8"/>
+        <line x1="22" y1="20" x2="78" y2="20" stroke="#C2185B" stroke-width="0.8"/>
+        <line x1="22" y1="32" x2="78" y2="30" stroke="#C2185B" stroke-width="0.8"/>
+        <text x="50" y="-8" font-family="Times New Roman, serif" font-size="11" text-anchor="middle" font-weight="bold">512→24</text>
+        <text x="50" y="55" font-family="SimSun, STSong, serif" font-size="10" text-anchor="middle">Softmax</text>
+      </g>
+    </g>
+    
+    <!-- 输出 -->
+    <rect x="25" y="230" width="120" height="38" rx="6" fill="#C2185B" stroke="#880E4F" stroke-width="2"/>
+    <text x="85" y="250" font-family="SimSun, STSong, serif" font-size="15" font-weight="bold" text-anchor="middle" fill="#fff">24类概率</text>
+    <text x="85" y="264" font-family="SimSun, STSong, serif" font-size="10" text-anchor="middle" fill="#fff">23种无人机+背景</text>
+  </g>
+  
+  <!-- 箭头：时序到分类 -->
+  <path d="M 1510 280 L 1550 280" stroke="#333" stroke-width="3.5" marker-end="url(#arrowhead)"/>
+  
+  <!-- ========== 第七部分：开放集识别 ========== -->
+  <g id="openset" transform="translate(1550, 450)">
+    <rect x="0" y="0" width="170" height="140" rx="10" fill="#FFF9C4" stroke="#F57F17" stroke-width="3" stroke-dasharray="8,6" filter="url(#shadow)"/>
+    <text x="85" y="26" font-family="SimSun, STSong, serif" font-size="18" font-weight="bold" text-anchor="middle" fill="#F57F17">开放集识别</text>
+    <text x="85" y="46" font-family="SimSun, STSong, serif" font-size="12" text-anchor="middle" fill="#F57F17">(推理时后处理)</text>
+    
+    <!-- 特征空间可视化 -->
+    <g transform="translate(85, 75)">
+      <circle cx="0" cy="0" r="42" fill="none" stroke="#F57F17" stroke-width="1.5" stroke-dasharray="3,3"/>
+      <circle cx="-15" cy="-10" r="5" fill="#4CAF50"/>
+      <circle cx="10" cy="-12" r="5" fill="#2196F3"/>
+      <circle cx="-12" cy="12" r="5" fill="#FF9800"/>
+      <circle cx="12" cy="14" r="5" fill="#9C27B0"/>
+      <circle cx="35" cy="2" r="5" fill="#F44336" opacity="0.6"/>
+      <text x="48" y="6" font-family="SimSun, STSong, serif" font-size="11" fill="#F44336" font-weight="bold">未知</text>
+    </g>
+    
+    <text x="85" y="127" font-family="SimSun, STSong, serif" font-size="11" text-anchor="middle" fill="#424242">余弦距离 > 阈值判定</text>
+  </g>
+  
+  <!-- 箭头：分类到开放集 -->
+  <path d="M 1635 420 L 1635 450" stroke="#F57F17" stroke-width="3" stroke-dasharray="6,4" marker-end="url(#arrowhead)"/>
+  
+  <!-- ========== 底部说明区 ========== -->
+  <g id="footer">
+    <!-- 架构说明 -->
+    <g transform="translate(50, 630)">
+      <rect x="0" y="0" width="1000" height="160" rx="10" fill="#fff" stroke="#666" stroke-width="2.5" filter="url(#shadow)"/>
+      <text x="500" y="30" font-family="SimSun, STSong, serif" font-size="18" font-weight="bold" text-anchor="middle" fill="#1a237e">架构说明</text>
+      <line x1="50" y1="42" x2="950" y2="42" stroke="#999" stroke-width="1.5"/>
+      
+      <text x="30" y="68" font-family="SimSun, STSong, serif" font-size="14" font-weight="bold" fill="#1a237e">数据集：</text>
+      <text x="30" y="90" font-family="SimSun, STSong, serif" font-size="13">DroneRFb-Spectra 时频谱图数据集，.npy格式，float16类型，归一化至[0,1]，输入尺寸512×512×1</text>
+      
+      <text x="30" y="115" font-family="SimSun, STSong, serif" font-size="14" font-weight="bold" fill="#1a237e">核心创新：</text>
+      <text x="30" y="137" font-family="SimSun, STSong, serif" font-size="13">✓ 双流并行架构分别处理FCS和VTS信号   ✓ FPN多尺度特征对齐   ✓ 自适应跨注意力融合机制</text>
+      <text x="30" y="156" font-family="SimSun, STSong, serif" font-size="13">✓ 时序Transformer捕获多普勒效应   ✓ 开放集识别增强实用性   ✓ 在线数据增强提升鲁棒性</text>
+    </g>
+    
+    <!-- 图例 -->
+    <g transform="translate(1090, 630)">
+      <rect x="0" y="0" width="630" height="160" rx="10" fill="#fff" stroke="#666" stroke-width="2.5" filter="url(#shadow)"/>
+      <text x="315" y="30" font-family="SimSun, STSong, serif" font-size="18" font-weight="bold" text-anchor="middle" fill="#1a237e">图例说明</text>
+      <line x1="30" y1="42" x2="600" y2="42" stroke="#999" stroke-width="1.5"/>
+      
+      <!-- 第一行 -->
+      <line x1="30" y1="65" x2="80" y2="65" stroke="#333" stroke-width="3" marker-end="url(#arrowhead)"/>
+      <text x="90" y="71" font-family="SimSun, STSong, serif" font-size="13">主数据流</text>
+      
+      <line x1="200" y1="65" x2="250" y2="65" stroke="#333" stroke-width="3" stroke-dasharray="6,4"/>
+      <text x="260" y="71" font-family="SimSun, STSong, serif" font-size="13">可选路径</text>
+      
+      <rect x="380" y="55" width="35" height="20" fill="#E8F5E9" stroke="#2E7D32" stroke-width="2"/>
+      <text x="425" y="71" font-family="SimSun, STSong, serif" font-size="13">FCS流</text>
+      
+      <!-- 第二行 -->
+      <rect x="30" y="95" width="35" height="20" fill="#FFF8E1" stroke="#F57C00" stroke-width="2"/>
+      <text x="75" y="111" font-family="SimSun, STSong, serif" font-size="13">VTS流</text>
+      
+      <rect x="200" y="95" width="35" height="20" fill="#FFCCBC" stroke="#D84315" stroke-width="2"/>
+      <text x="245" y="111" font-family="SimSun, STSong, serif" font-size="13">融合模块</text>
+      
+      <rect x="380" y="95" width="35" height="20" fill="#D1C4E9" stroke="#5E35B1" stroke-width="2"/>
+      <text x="425" y="111" font-family="SimSun, STSong, serif" font-size="13">时序编码</text>
+      
+      <!-- 第三行 -->
+      <rect x="30" y="130" width="35" height="20" fill="#FCE4EC" stroke="#C2185B" stroke-width="2"/>
+      <text x="75" y="146" font-family="SimSun, STSong, serif" font-size="13">分类层</text>
+      
+      <rect x="200" y="130" width="35" height="20" fill="#FFF9C4" stroke="#F57F17" stroke-width="2" stroke-dasharray="6,4"/>
+      <text x="245" y="146" font-family="SimSun, STSong, serif" font-size="13">开放集(推理)</text>
+      
+      <rect x="380" y="130" width="35" height="20" fill="#E8EAF6" stroke="#3F51B5" stroke-width="2"/>
+      <text x="425" y="146" font-family="SimSun, STSong, serif" font-size="13">数据增强</text>
+    </g>
+  </g>
+  
+  <!-- 版本信息 -->
+  <text x="1750" y="1085" font-family="SimSun, STSong, serif" font-size="11" text-anchor="end" fill="#999">
+    架构版本 v2.0 | DroneRFb-Spectra 数据集 | 设计者: OrangePi-CM5
+  </text>
+</svg>

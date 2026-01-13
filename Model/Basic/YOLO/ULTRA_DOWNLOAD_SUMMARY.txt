@@ -1,0 +1,46 @@
+[YOLOv3] OK yolov3u.pt
+[YOLOv3] OK yolov3-tinyu.pt
+[YOLOv3] OK yolov3-sppu.pt
+[YOLOv5] OK yolov5nu.pt
+[YOLOv5] OK yolov5su.pt
+[YOLOv5] OK yolov5mu.pt
+[YOLOv5] OK yolov5lu.pt
+[YOLOv5] OK yolov5xu.pt
+[YOLOv5] OK yolov5n6u.pt
+[YOLOv5] OK yolov5s6u.pt
+[YOLOv5] OK yolov5m6u.pt
+[YOLOv5] OK yolov5l6u.pt
+[YOLOv5] OK yolov5x6u.pt
+[YOLOv8] OK yolov8n.pt
+[YOLOv8] OK yolov8s.pt
+[YOLOv8] OK yolov8m.pt
+[YOLOv8] OK yolov8l.pt
+[YOLOv8] OK yolov8x.pt
+[YOLOv8] OK yolov8n-cls.pt
+[COPY] yolov8n-cls.pt -> C:\Users\HP\Desktop\Exp\Model\Pretrain\Backbone\Texture
+[YOLOv8] OK yolov8s-cls.pt
+[COPY] yolov8s-cls.pt -> C:\Users\HP\Desktop\Exp\Model\Pretrain\Backbone\Texture
+[YOLOv8] OK yolov8m-cls.pt
+[COPY] yolov8m-cls.pt -> C:\Users\HP\Desktop\Exp\Model\Pretrain\Backbone\Texture
+[YOLOv8] OK yolov8x-cls.pt
+[COPY] yolov8x-cls.pt -> C:\Users\HP\Desktop\Exp\Model\Pretrain\Backbone\Texture
+[YOLOv8] OK yolov8n-seg.pt
+[YOLOv8] OK yolov8s-seg.pt
+[YOLOv8] OK yolov8m-seg.pt
+[YOLOv8] OK yolov8l-seg.pt
+[YOLOv8] OK yolov8x-seg.pt
+[YOLOv8] OK yolov8n-pose.pt
+[YOLOv8] OK yolov8s-pose.pt
+[YOLOv8] OK yolov8l-pose.pt
+[YOLOv8] OK yolov8x-pose.pt
+[YOLOv8] OK yolov8n-obb.pt
+[YOLOv8] OK yolov8s-obb.pt
+[YOLOv8] OK yolov8m-obb.pt
+[YOLOv8] OK yolov8l-obb.pt
+[YOLOv8] OK yolov8x-obb.pt
+[YOLOv11] HTTP 404: https://github.com/ultralytics/assets/releases/download/v0.0.0/yolov11n.pt
+[YOLOv11] HTTP 404: https://github.com/ultralytics/assets/releases/download/v0.0.0/yolov11s.pt
+[YOLOv11] HTTP 404: https://github.com/ultralytics/assets/releases/download/v0.0.0/yolov11m.pt
+[YOLOv11] HTTP 404: https://github.com/ultralytics/assets/releases/download/v0.0.0/yolov11l.pt
+[YOLOv11] HTTP 404: https://github.com/ultralytics/assets/releases/download/v0.0.0/yolov11x.pt
+[YOLOv11] OK yolo11s-oiv7.pt

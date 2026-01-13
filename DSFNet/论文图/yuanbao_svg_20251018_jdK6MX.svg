@@ -1,0 +1,388 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1800" height="1200" viewBox="0 0 1800 1200" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <!-- 颜色定义 -->
+    <linearGradient id="fcsGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#E8F5E9"/>
+      <stop offset="100%" stop-color="#C8E6C9"/>
+    </linearGradient>
+    <linearGradient id="vtsGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FFF3E0"/>
+      <stop offset="100%" stop-color="#FFE0B2"/>
+    </linearGradient>
+    <linearGradient id="fusionGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FBE9E7"/>
+      <stop offset="100%" stop-color="#FFCCBC"/>
+    </linearGradient>
+    
+    <!-- 符号定义 -->
+    <symbol id="convSymbol" viewBox="0 0 40 40">
+      <rect x="5" y="5" width="30" height="30" rx="3" fill="#4CAF50" stroke="#2E7D32" stroke-width="2"/>
+      <text x="20" y="22" font-family="Arial" font-size="12" text-anchor="middle" fill="white">Conv</text>
+    </symbol>
+    
+    <symbol id="poolSymbol" viewBox="0 0 40 40">
+      <rect x="5" y="5" width="30" height="30" rx="3" fill="#2196F3" stroke="#0D47A1" stroke-width="2"/>
+      <text x="20" y="22" font-family="Arial" font-size="10" text-anchor="middle" fill="white">Pool</text>
+    </symbol>
+    
+    <symbol id="attentionSymbol" viewBox="0 0 40 40">
+      <circle cx="20" cy="20" r="15" fill="#FF9800" stroke="#E65100" stroke-width="2"/>
+      <text x="20" y="24" font-family="Arial" font-size="14" text-anchor="middle" fill="white">A</text>
+    </symbol>
+    
+    <symbol id="fcSymbol" viewBox="0 0 40 40">
+      <rect x="5" y="5" width="30" height="30" rx="3" fill="#9C27B0" stroke="#4A148C" stroke-width="2"/>
+      <text x="20" y="22" font-family="Arial" font-size="10" text-anchor="middle" fill="white">FC</text>
+    </symbol>
+    
+    <!-- 箭头标记 -->
+    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#333"/>
+    </marker>
+  </defs>
+  
+  <style>
+    .module-title { font-family: Arial, sans-serif; font-size: 16px; font-weight: bold; }
+    .param-text { font-family: Arial, sans-serif; font-size: 11px; }
+    .dimension-text { font-family: Arial, sans-serif; font-size: 10px; fill: #666; }
+    .section-title { font-family: Arial, sans-serif; font-size: 20px; font-weight: bold; }
+  </style>
+  
+  <!-- 背景 -->
+  <rect width="1800" height="1200" fill="#fafafa"/>
+  
+  <!-- 标题 -->
+  <text x="900" y="40" class="section-title" text-anchor="middle" fill="#1a237e">
+    Dual-Stream Adaptive Robust Fusion Network
+  </text>
+  <text x="900" y="65" font-family="Arial" font-size="14" text-anchor="middle" fill="#5c6bc0">
+    For DroneRFb-Spectra Time-Frequency Spectrum Classification
+  </text>
+  
+  <!-- ========== 数据输入层 ========== -->
+  <g id="input-layer">
+    <rect x="50" y="100" width="250" height="150" rx="8" fill="url(#fcsGrad)" stroke="#2E7D32" stroke-width="2"/>
+    <text x="175" y="120" class="module-title" text-anchor="middle" fill="#2E7D32">FCS Input</text>
+    
+    <!-- 时频谱图可视化 -->
+    <rect x="70" y="135" width="130" height="40" fill="#FFFFFF" stroke="#2E7D32" stroke-width="1"/>
+    <rect x="75" y="140" width="120" height="30" fill="#E8F5E9" stroke="#2E7D32" stroke-width="0.5"/>
+    
+    <!-- 频率信号示意 -->
+    <path d="M 80 150 Q 100 140, 120 155 Q 140 165, 160 150 Q 180 140, 190 155" 
+          fill="none" stroke="#4CAF50" stroke-width="2"/>
+    <path d="M 80 160 Q 100 170, 120 160 Q 140 150, 160 165 Q 180 175, 190 160" 
+          fill="none" stroke="#4CAF50" stroke-width="2"/>
+    
+    <text x="175" y="190" class="dimension-text" text-anchor="middle">Shape: [512, 512, 1]</text>
+    <text x="175" y="205" class="param-text" text-anchor="middle" fill="#d32f2f">Short-time Frequency-hopping</text>
+    
+    <!-- VTS输入 -->
+    <rect x="50" y="270" width="250" height="150" rx="8" fill="url(#vtsGrad)" stroke="#F57C00" stroke-width="2"/>
+    <text x="175" y="290" class="module-title" text-anchor="middle" fill="#F57C00">VTS Input</text>
+    
+    <!-- 宽带信号示意 -->
+    <rect x="70" y="305" width="130" height="40" fill="#FFFFFF" stroke="#F57C00" stroke-width="1"/>
+    <rect x="75" y="310" width="120" height="30" fill="#FFF3E0" stroke="#F57C00" stroke-width="0.5"/>
+    
+    <path d="M 80 325 Q 120 315, 160 330 Q 180 340, 190 325" 
+          fill="none" stroke="#FF9800" stroke-width="3"/>
+    
+    <text x="175" y="360" class="dimension-text" text-anchor="middle">Shape: [512, 512, 1]</text>
+    <text x="175" y="375" class="param-text" text-anchor="middle" fill="#d32f2f">Wideband Stable Signal</text>
+    
+    <!-- 数据增强标注 -->
+    <rect x="320" y="185" width="150" height="50" rx="5" fill="#E3F2FD" stroke="#1976D2" stroke-width="1.5"/>
+    <text x="395" y="200" class="module-title" text-anchor="middle" fill="#1976D2">Data Augmentation</text>
+    <text x="395" y="215" class="param-text" text-anchor="middle">Background Mixing</text>
+    <text x="395" y="230" class="param-text" text-anchor="middle">Frequency Shift</text>
+  </g>
+  
+  <!-- ========== FCS流：Swin Transformer ========== -->
+  <g id="fcs-stream">
+    <rect x="500" y="100" width="350" height="320" rx="8" fill="url(#fcsGrad)" stroke="#2E7D32" stroke-width="2"/>
+    <text x="675" y="120" class="module-title" text-anchor="middle" fill="#2E7D32">FCS Stream: Swin Transformer</text>
+    
+    <!-- Stage 1 -->
+    <rect x="520" y="150" width="130" height="60" rx="5" fill="#FFFFFF" stroke="#2E7D32" stroke-width="1.5"/>
+    <text x="585" y="165" class="param-text" text-anchor="middle" font-weight="bold">Stage 1</text>
+    <use xlink:href="#convSymbol" x="535" y="170" width="30" height="30"/>
+    <text x="585" y="190" class="param-text" text-anchor="middle">Patch Partition</text>
+    <text x="585" y="205" class="dimension-text" text-anchor="middle">128×128×128</text>
+    
+    <!-- Stage 2 -->
+    <rect x="520" y="220" width="130" height="60" rx="5" fill="#FFFFFF" stroke="#2E7D32" stroke-width="1.5"/>
+    <text x="585" y="235" class="param-text" text-anchor="middle" font-weight="bold">Stage 2</text>
+    <use xlink:href="#attentionSymbol" x="535" y="240" width="30" height="30"/>
+    <text x="585" y="260" class="param-text" text-anchor="middle">W-MSA</text>
+    <text x="585" y="275" class="dimension-text" text-anchor="middle">64×64×256</text>
+    
+    <!-- Stage 3 -->
+    <rect x="520" y="290" width="130" height="60" rx="5" fill="#FFFFFF" stroke="#2E7D32" stroke-width="1.5"/>
+    <text x="585" y="305" class="param-text" text-anchor="middle" font-weight="bold">Stage 3</text>
+    <use xlink:href="#attentionSymbol" x="535" y="310" width="30" height="30"/>
+    <text x="585" y="330" class="param-text" text-anchor="middle">SW-MSA</text>
+    <text x="585" y="345" class="dimension-text" text-anchor="middle">32×32×512</text>
+    
+    <!-- Stage 4 -->
+    <rect x="680" y="150" width="130" height="60" rx="5" fill="#FFFFFF" stroke="#2E7D32" stroke-width="1.5"/>
+    <text x="745" y="165" class="param-text" text-anchor="middle" font-weight="bold">Stage 4</text>
+    <use xlink:href="#attentionSymbol" x="695" y="170" width="30" height="30"/>
+    <text x="745" y="190" class="param-text" text-anchor="middle">Window Attention</text>
+    <text x="745" y="205" class="dimension-text" text-anchor="middle">16×16×1024</text>
+    
+    <!-- MLP层 -->
+    <rect x="680" y="220" width="130" height="60" rx="5" fill="#FFFFFF" stroke="#2E7D32" stroke-width="1.5"/>
+    <text x="745" y="235" class="param-text" text-anchor="middle" font-weight="bold">MLP</text>
+    <use xlink:href="#fcSymbol" x="695" y="240" width="30" height="30"/>
+    <text x="745" y="260" class="param-text" text-anchor="middle">Feed Forward</text>
+    <text x="745" y="275" class="dimension-text" text-anchor="middle">GELU Activation</text>
+    
+    <!-- 全局池化 -->
+    <rect x="680" y="290" width="130" height="60" rx="5" fill="#FFFFFF" stroke="#2E7D32" stroke-width="1.5"/>
+    <text x="745" y="305" class="param-text" text-anchor="middle" font-weight="bold">Global Pooling</text>
+    <use xlink:href="#poolSymbol" x="695" y="310" width="30" height="30"/>
+    <text x="745" y="330" class="param-text" text-anchor="middle">Feature Vector</text>
+    <text x="745" y="345" class="dimension-text" text-anchor="middle">1024-dim</text>
+    
+    <!-- 连接箭头 -->
+    <path d="M 650 180 L 680 180" stroke="#2E7D32" stroke-width="2" marker-end="url(#arrowhead)"/>
+    <path d="M 650 250 L 680 250" stroke="#2E7D32" stroke-width="2" marker-end="url(#arrowhead)"/>
+    <path d="M 650 320 L 680 320" stroke="#2E7D32" stroke-width="2" marker-end="url(#arrowhead)"/>
+  </g>
+  
+  <!-- ========== VTS流：ConvNeXt ========== -->
+  <g id="vts-stream">
+    <rect x="500" y="450" width="350" height="320" rx="8" fill="url(#vtsGrad)" stroke="#F57C00" stroke-width="2"/>
+    <text x="675" y="470" class="module-title" text-anchor="middle" fill="#F57C00">VTS Stream: ConvNeXt</text>
+    
+    <!-- Stage 1 -->
+    <rect x="520" y="500" width="130" height="60" rx="5" fill="#FFFFFF" stroke="#F57C00" stroke-width="1.5"/>
+    <text x="585" y="515" class="param-text" text-anchor="middle" font-weight="bold">Stage 1</text>
+    <use xlink:href="#convSymbol" x="535" y="520" width="30" height="30"/>
+    <text x="585" y="540" class="param-text" text-anchor="middle">7×7 Conv</text>
+    <text x="585" y="555" class="dimension-text" text-anchor="middle">128×128×128</text>
+    
+    <!-- Stage 2 -->
+    <rect x="520" y="570" width="130" height="60" rx="5" fill="#FFFFFF" stroke="#F57C00" stroke-width="1.5"/>
+    <text x="585" y="585" class="param-text" text-anchor="middle" font-weight="bold">Stage 2</text>
+    <use xlink:href="#convSymbol" x="535" y="590" width="30" height="30"/>
+    <text x="585" y="610" class="param-text" text-anchor="middle">Depthwise Sep</text>
+    <text x="585" y="625" class="dimension-text" text-anchor="middle">64×64×256</text>
+    
+    <!-- Stage 3 -->
+    <rect x="520" y="640" width="130" height="60" rx="5" fill="#FFFFFF" stroke="#F57C00" stroke-width="1.5"/>
+    <text x="585" y="655" class="param-text" text-anchor="middle" font-weight="bold">Stage 3</text>
+    <use xlink:href="#convSymbol" x="535" y="660" width="30" height="30"/>
+    <text x="585" y="680" class="param-text" text-anchor="middle">LayerNorm</text>
+    <text x="585" y="695" class="dimension-text" text-anchor="middle">32×32×512</text>
+    
+    <!-- Stage 4 -->
+    <rect x="680" y="500" width="130" height="60" rx="5" fill="#FFFFFF" stroke="#F57C00" stroke-width="1.5"/>
+    <text x="745" y="515" class="param-text" text-anchor="middle" font-weight="bold">Stage 4</text>
+    <use xlink:href="#convSymbol" x="695" y="520" width="30" height="30"/>
+    <text x="745" y="540" class="param-text" text-anchor="middle">Bottleneck</text>
+    <text x="745" y="555" class="dimension-text" text-anchor="middle">16×16×1024</text>
+    
+    <!-- 全局池化 -->
+    <rect x="680" y="570" width="130" height="60" rx="5" fill="#FFFFFF" stroke="#F57C00" stroke-width="1.5"/>
+    <text x="745" y="585" class="param-text" text-anchor="middle" font-weight="bold">Global Pooling</text>
+    <use xlink:href="#poolSymbol" x="695" y="590" width="30" height="30"/>
+    <text x="745" y="610" class="param-text" text-anchor="middle">Feature Vector</text>
+    <text x="745" y="625" class="dimension-text" text-anchor="middle">1024-dim</text>
+    
+    <!-- 激活函数 -->
+    <rect x="680" y="640" width="130" height="60" rx="5" fill="#FFFFFF" stroke="#F57C00" stroke-width="1.5"/>
+    <text x="745" y="655" class="param-text" text-anchor="middle" font-weight="bold">Activation</text>
+    <rect x="695" y="660" width="30" height="30" rx="3" fill="#FF9800" stroke="#E65100" stroke-width="1.5"/>
+    <text x="710" y="675" font-family="Arial" font-size="12" text-anchor="middle" fill="white">G</text>
+    <text x="745" y="680" class="param-text" text-anchor="middle">GELU</text>
+    <text x="745" y="695" class="dimension-text" text-anchor="middle">Non-linearity</text>
+    
+    <!-- 连接箭头 -->
+    <path d="M 650 530 L 680 530" stroke="#F57C00" stroke-width="2" marker-end="url(#arrowhead)"/>
+    <path d="M 650 600 L 680 600" stroke="#F57C00" stroke-width="2" marker-end="url(#arrowhead)"/>
+    <path d="M 650 670 L 680 670" stroke="#F57C00" stroke-width="2" marker-end="url(#arrowhead)"/>
+  </g>
+  
+  <!-- ========== 特征金字塔网络 (FPN) ========== -->
+  <g id="fpn">
+    <rect x="900" y="250" width="200" height="400" rx="8" fill="#E1F5FE" stroke="#0288D1" stroke-width="2"/>
+    <text x="1000" y="270" class="module-title" text-anchor="middle" fill="#0288D1">Feature Pyramid Network</text>
+    
+    <!-- 多尺度特征 -->
+    <rect x="920" y="300" width="160" height="80" rx="5" fill="#FFFFFF" stroke="#0288D1" stroke-width="1.5"/>
+    <text x="1000" y="320" class="param-text" text-anchor="middle" font-weight="bold">Multi-scale Features</text>
+    <text x="1000" y="340" class="param-text" text-anchor="middle">16²×1024, 32²×512, 64²×256</text>
+    <text x="1000" y="360" class="dimension-text" text-anchor="middle">Feature Alignment</text>
+    
+    <!-- 上采样 -->
+    <rect x="920" y="400" width="160" height="60" rx="5" fill="#FFFFFF" stroke="#0288D1" stroke-width="1.5"/>
+    <text x="1000" y="420" class="param-text" text-anchor="middle" font-weight="bold">Upsampling</text>
+    <text x="1000" y="440" class="dimension-text" text-anchor="middle">2× Bilinear</text>
+    
+    <!-- 特征融合 -->
+    <rect x="920" y="480" width="160" height="60" rx="5" fill="#FFFFFF" stroke="#0288D1" stroke-width="1.5"/>
+    <text x="1000" y="500" class="param-text" text-anchor="middle" font-weight="bold">Feature Fusion</text>
+    <text x="1000" y="520" class="dimension-text" text-anchor="middle">Add Operation</text>
+    
+    <!-- 连接箭头 -->
+    <path d="M 850 320 L 920 320" stroke="#0288D1" stroke-width="2" marker-end="url(#arrowhead)"/>
+    <path d="M 850 600 L 920 600" stroke="#0288D1" stroke-width="2" marker-end="url(#arrowhead)"/>
+  </g>
+  
+  <!-- ========== 跨注意力融合 ========== -->
+  <g id="cross-attention">
+    <rect x="1150" y="300" width="200" height="300" rx="8" fill="url(#fusionGrad)" stroke="#D84315" stroke-width="2"/>
+    <text x="1250" y="320" class="module-title" text-anchor="middle" fill="#D84315">Cross-Attention Fusion</text>
+    
+    <!-- QKV机制 -->
+    <rect x="1170" y="350" width="160" height="100" rx="5" fill="#FFFFFF" stroke="#D84315" stroke-width="1.5"/>
+    <text x="1250" y="370" class="param-text" text-anchor="middle" font-weight="bold">QKV Mechanism</text>
+    
+    <circle cx="1200" cy="400" r="15" fill="#FF9800" stroke="#E65100" stroke-width="1.5"/>
+    <text x="1200" y="405" font-family="Arial" font-size="12" text-anchor="middle" fill="white">Q</text>
+    <text x="1200" y="430" class="dimension-text" text-anchor="middle">FCS Query</text>
+    
+    <circle cx="1250" cy="400" r="15" fill="#FF5722" stroke="#D84315" stroke-width="1.5"/>
+    <text x="1250" y="405" font-family="Arial" font-size="12" text-anchor="middle" fill="white">K</text>
+    <text x="1250" y="430" class="dimension-text" text-anchor="middle">VTS Key</text>
+    
+    <circle cx="1300" cy="400" r="15" fill="#F44336" stroke="#C62828" stroke-width="1.5"/>
+    <text x="1300" y="405" font-family="Arial" font-size="12" text-anchor="middle" fill="white">V</text>
+    <text x="1300" y="430" class="dimension-text" text-anchor="middle">VTS Value</text>
+    
+    <!-- 注意力计算 -->
+    <rect x="1170" y="470" width="160" height="60" rx="5" fill="#FFFFFF" stroke="#D84315" stroke-width="1.5"/>
+    <text x="1250" y="490" class="param-text" text-anchor="middle" font-weight="bold">Attention</text>
+    <text x="1250" y="510" class="dimension-text" text-anchor="middle">softmax(QKᵀ/√d)V</text>
+    
+    <!-- 多头注意力 -->
+    <rect x="1170" y="550" width="160" height="60" rx="5" fill="#FFFFFF" stroke="#D84315" stroke-width="1.5"/>
+    <text x="1250" y="570" class="param-text" text-anchor="middle" font-weight="bold">Multi-Head</text>
+    <text x="1250" y="590" class="dimension-text" text-anchor="middle">8 Heads</text>
+  </g>
+  
+  <!-- ========== 时序Transformer ========== -->
+  <g id="temporal-transformer">
+    <rect x="1400" y="300" width="200" height="300" rx="8" fill="#F3E5F5" stroke="#7B1FA2" stroke-width="2"/>
+    <text x="1500" y="320" class="module-title" text-anchor="middle" fill="#7B1FA2">Temporal Transformer</text>
+    
+    <!-- 编码器层1 -->
+    <rect x="1420" y="350" width="160" height="60" rx="5" fill="#FFFFFF" stroke="#7B1FA2" stroke-width="1.5"/>
+    <text x="1500" y="370" class="param-text" text-anchor="middle" font-weight="bold">Encoder Layer 1</text>
+    <use xlink:href="#attentionSymbol" x="1435" y="355" width="30" height="30"/>
+    <text x="1500" y="390" class="dimension-text" text-anchor="middle">4 Heads, d=256</text>
+    
+    <!-- 编码器层2 -->
+    <rect x="1420" y="430" width="160" height="60" rx="5" fill="#FFFFFF" stroke="#7B1FA2" stroke-width="1.5"/>
+    <text x="1500" y="450" class="param-text" text-anchor="middle" font-weight="bold">Encoder Layer 2</text>
+    <use xlink:href="#attentionSymbol" x="1435" y="435" width="30" height="30"/>
+    <text x="1500" y="470" class="dimension-text" text-anchor="middle">4 Heads, d=256</text>
+    
+    <!-- 位置编码 -->
+    <rect x="1420" y="510" width="160" height="60" rx="5" fill="#FFFFFF" stroke="#7B1FA2" stroke-width="1.5"/>
+    <text x="1500" y="530" class="param-text" text-anchor="middle" font-weight="bold">Position Encoding</text>
+    <text x="1500" y="550" class="dimension-text" text-anchor="middle">Sinusoidal + Learnable</text>
+  </g>
+  
+  <!-- ========== 分类头 ========== -->
+  <g id="classification-head">
+    <rect x="1650" y="300" width="120" height="300" rx="8" fill="#E8F5E9" stroke="#2E7D32" stroke-width="2"/>
+    <text x="1710" y="320" class="module-title" text-anchor="middle" fill="#2E7D32">Classification</text>
+    
+    <!-- 全局池化 -->
+    <rect x="1665" y="350" width="90" height="40" rx="5" fill="#FFFFFF" stroke="#2E7D32" stroke-width="1.5"/>
+    <use xlink:href="#poolSymbol" x="1670" y="355" width="30" height="30"/>
+    <text x="1710" y="375" class="param-text" text-anchor="middle">Global Pool</text>
+    
+    <!-- FC层1 -->
+    <rect x="1665" y="410" width="90" height="40" rx="5" fill="#FFFFFF" stroke="#2E7D32" stroke-width="1.5"/>
+    <use xlink:href="#fcSymbol" x="1670" y="415" width="30" height="30"/>
+    <text x="1710" y="430" class="param-text" text-anchor="middle">1024→512</text>
+    <text x="1710" y="442" class="dimension-text" text-anchor="middle">ReLU</text>
+    
+    <!-- FC层2 -->
+    <rect x="1665" y="470" width="90" height="40" rx="5" fill="#FFFFFF" stroke="#2E7D32" stroke-width="1.5"/>
+    <use xlink:href="#fcSymbol" x="1670" y="475" width="30" height="30"/>
+    <text x="1710" y="490" class="param-text" text-anchor="middle">512→24</text>
+    <text x="1710" y="502" class="dimension-text" text-anchor="middle">Softmax</text>
+    
+    <!-- 输出 -->
+    <rect x="1665" y="530" width="90" height="40" rx="5" fill="#4CAF50" stroke="#2E7D32" stroke-width="1.5"/>
+    <text x="1710" y="550" class="param-text" text-anchor="middle" fill="white">24 Classes</text>
+    <text x="1710" y="562" class="dimension-text" text-anchor="middle" fill="white">23 Drones + Background</text>
+  </g>
+  
+  <!-- ========== 开放集识别 ========== -->
+  <g id="open-set">
+    <rect x="1650" y="650" width="120" height="80" rx="8" fill="#FFF9C4" stroke="#FFA000" stroke-width="2" stroke-dasharray="5,3"/>
+    <text x="1710" y="670" class="module-title" text-anchor="middle" fill="#FFA000">Open Set</text>
+    <text x="1710" y="690" class="param-text" text-anchor="middle">Cosine Distance</text>
+    <text x="1710" y="705" class="dimension-text" text-anchor="middle">Threshold > 0.95</text>
+    <text x="1710" y="720" class="dimension-text" text-anchor="middle">Unknown Detection</text>
+  </g>
+  
+  <!-- ========== 主数据流箭头 ========== -->
+  <path d="M 300 175 L 500 175" stroke="#2E7D32" stroke-width="3" marker-end="url(#arrowhead)"/>
+  <path d="M 300 345 L 500 345" stroke="#F57C00" stroke-width="3" marker-end="url(#arrowhead)"/>
+  <path d="M 850 320 L 900 320" stroke="#2E7D32" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <path d="M 850 600 L 900 600" stroke="#F57C00" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <path d="M 1100 450 L 1150 450" stroke="#D84315" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <path d="M 1350 450 L 1400 450" stroke="#7B1FA2" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <path d="M 1600 450 L 1650 450" stroke="#2E7D32" stroke-width="2" marker-end="url(#arrowhead)"/>
+  
+  <!-- ========== 图例 ========== -->
+  <g id="legend">
+    <rect x="50" y="800" width="400" height="150" rx="8" fill="#FFFFFF" stroke="#666" stroke-width="1.5"/>
+    <text x="250" y="820" class="module-title" text-anchor="middle" fill="#333">Legend</text>
+    
+    <!-- 符号说明 -->
+    <use xlink:href="#convSymbol" x="70" y="850" width="25" height="25"/>
+    <text x="105" y="865" class="param-text">Convolutional Layer</text>
+    
+    <use xlink:href="#poolSymbol" x="70" y="890" width="25" height="25"/>
+    <text x="105" y="905" class="param-text">Pooling Layer</text>
+    
+    <use xlink:href="#attentionSymbol" x="70" y="930" width="25" height="25"/>
+    <text x="105" y="945" class="param-text">Attention Mechanism</text>
+    
+    <use xlink:href="#fcSymbol" x="250" y="850" width="25" height="25"/>
+    <text x="285" y="865" class="param-text">Fully Connected Layer</text>
+    
+    <!-- 颜色说明 -->
+    <rect x="250" y="880" width="25" height="15" fill="#E8F5E9" stroke="#2E7D32" stroke-width="1"/>
+    <text x="285" y="892" class="param-text">FCS Stream</text>
+    
+    <rect x="250" y="905" width="25" height="15" fill="#FFF3E0" stroke="#F57C00" stroke-width="1"/>
+    <text x="285" y="917" class="param-text">VTS Stream</text>
+    
+    <rect x="250" y="930" width="25" height="15" fill="#FBE9E7" stroke="#D84315" stroke-width="1"/>
+    <text x="285" y="942" class="param-text">Fusion Module</text>
+  </g>
+  
+  <!-- ========== 架构说明 ========== -->
+  <g id="description">
+    <rect x="500" y="800" width="600" height="150" rx="8" fill="#FFFFFF" stroke="#666" stroke-width="1.5"/>
+    <text x="800" y="820" class="module-title" text-anchor="middle" fill="#333">Architecture Description</text>
+    
+    <text x="520" y="850" class="param-text">• Dual-stream design: Swin Transformer for FCS (frequency-hopping), ConvNeXt for VTS (wideband)</text>
+    <text x="520" y="870" class="param-text">• Feature Pyramid Network (FPN) for multi-scale feature alignment</text>
+    <text x="520" y="890" class="param-text">• Cross-attention fusion with adaptive weighting for missing VTS signals</text>
+    <text x="520" y="910" class="param-text">• Temporal Transformer for Doppler effect modeling</text>
+    <text x="520" y="930" class="param-text">• Open set recognition based on cosine distance thresholding</text>
+  </g>
+  
+  <!-- ========== 数据流说明 ========== -->
+  <g id="dataflow">
+    <rect x="1150" y="800" width="600" height="150" rx="8" fill="#FFFFFF" stroke="#666" stroke-width="1.5"/>
+    <text x="1450" y="820" class="module-title" text-anchor="middle" fill="#333">Data Flow</text>
+    
+    <text x="1170" y="850" class="param-text">Input: Time-frequency spectrograms (.npy format, 512×512×1)</text>
+    <text x="1170" y="870" class="param-text">Processing: Dual-stream feature extraction → FPN alignment → Cross-attention fusion</text>
+    <text x="1170" y="890" class="param-text">Temporal modeling: Transformer encoder for sequence dependencies</text>
+    <text x="1170" y="910" class="param-text">Classification: Global pooling → FC layers → 24-class output</text>
+    <text x="1170" y="930" class="param-text">Open set: Cosine distance-based unknown detection (inference only)</text>
+  </g>
+</svg>

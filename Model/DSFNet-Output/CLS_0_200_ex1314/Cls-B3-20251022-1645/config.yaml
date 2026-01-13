@@ -1,0 +1,34 @@
+data:
+  train_list: C:\Users\HP\Desktop\Exp\Model\DSFNet-Output\FCS_VTS_0_200_ex1314\train_list_fcs.txt
+  val_list: C:\Users\HP\Desktop\Exp\Model\DSFNet-Output\FCS_VTS_0_200_ex1314\val_list_fcs.txt
+  vts_list: C:\Users\HP\Desktop\Exp\Model\DSFNet-Output\FCS_VTS_0_200_ex1314\train_list_vts.txt
+  vts_val_list: C:\Users\HP\Desktop\Exp\Model\DSFNet-Output\FCS_VTS_0_200_ex1314\val_list_vts.txt
+  stats_fcs: ''
+  stats_vts: ''
+  num_classes: 22
+model:
+  name: B3FusionModel
+  backbone_type: swin
+  embed_dim: 512
+  fusion_depth: 1
+  num_heads: 8
+  attn_dropout: 0.1
+  mlp_ratio: 4.0
+  init_fusion_scale: 0.001
+train:
+  epochs: 40
+  batch_size: 2
+  seed: 3407
+  amp: true
+  num_workers: 0
+  save_interval: 1
+  backbone_lr: 3.0e-05
+  head_lr: 0.003
+  fusion_warmup_epochs: 5
+  fusion_ramp_epochs: 15
+  vts_freeze_epochs: 2
+  early_stop: false
+  early_stop_metric: val_loss
+  early_stop_patience: 8
+  early_stop_min_delta: 0.0
+run_dir: C:\Users\HP\Desktop\Exp\Model\DSFNet-Output\CLS_0_200_ex1314\Run-B3-20251022-1645
