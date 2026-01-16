@@ -21,7 +21,7 @@ if str(_PROJ_ROOT) not in sys.path:
 # local imports
 from src.data.dataset_npz import NPZDataset
 from src.models.smnet_backbone import SMNetBackbone
-from src.models.smnet_head import AnchorHead, decode_head_output, generate_anchors
+from src.models.smnet_head import AnchorHead, MultiScaleHead, decode_head_output, decode_multi_head_output, generate_anchors
 from src.models.smnet_loss import DetectionLoss, bbox_iou_xywh
 
 
@@ -106,24 +106,48 @@ def nms_xywh(boxes: torch.Tensor, scores: torch.Tensor, iou_thres: float) -> Lis
     return keep
 
 
-def evaluate_map50(model: nn.Module,
-                    anchors_pix: torch.Tensor,
-                    stride: int,
-                    loader: DataLoader,
-                    num_classes: int,
-                    conf_thres: float = 0.05,
-                    nms_iou: float = 0.5,
-                    device: str | torch.device = 'cuda',
-                    max_batches: int = 0,
-                    eval_topk: int = 300,
-                    return_aps: bool = False,
-                    dump_vis: int = 0,
-                    vis_dir: Path | None = None,
-                    per_class_ap: bool = False):
+def nms_xywh_classwise(boxes: torch.Tensor, scores: torch.Tensor, labels: torch.Tensor, iou_thres: float) -> List[int]:
+    if boxes.numel() == 0:
+        return []
+    keep_all: List[int] = []
+    unique_labels = labels.unique()
+    for c in unique_labels:
+        idx = (labels == c).nonzero(as_tuple=False).reshape(-1)
+        if idx.numel() == 0:
+            continue
+        keep_c = nms_xywh(boxes[idx], scores[idx], iou_thres)
+        keep_all.extend(idx[torch.tensor(keep_c, device=idx.device)].tolist())
+    if not keep_all:
+        return []
+    keep_all = list(set(keep_all))
+    # sort by score descending for stable evaluation
+    keep_scores = scores[keep_all]
+    order = torch.argsort(keep_scores, descending=True)
+    return [keep_all[i] for i in order.tolist()]
+
+
+def evaluate(model: nn.Module,
+             anchors_pix: torch.Tensor,
+             stride: int,
+             loader: DataLoader,
+             num_classes: int,
+             conf_thres: float = 0.05,
+             nms_iou: float = 0.5,
+             eval_conf_thres: List[float] | None = None,
+             agnostic_nms: bool = False,
+             device: str | torch.device = 'cuda',
+             max_batches: int = 0,
+             eval_topk: int = 300,
+             return_aps: bool = False,
+             dump_vis: int = 0,
+             vis_dir: Path | None = None,
+             per_class_ap: bool = False):
     model.eval()
     # per-class lists of (score, is_tp)
     preds_per_class: List[List[Tuple[float, int]]] = [[] for _ in range(num_classes)]
     gt_count_per_class = [0 for _ in range(num_classes)]
+    eval_conf_thres = eval_conf_thres or [0.05, 0.25, 0.5]
+    prefilter_thres = min(eval_conf_thres) if eval_conf_thres else conf_thres
 
     dumped = 0
     with torch.no_grad():
@@ -146,7 +170,10 @@ def evaluate_map50(model: nn.Module,
 
             # forward
             out = model(Xb)
-            conf_logits, pred_boxes, cls_logits = decode_head_output(out, model.anchor_sizes, stride)
+            if model.multi_scale:
+                conf_logits, pred_boxes, cls_logits = decode_multi_head_output(out, model.anchor_sizes_levels, model.strides)
+            else:
+                conf_logits, pred_boxes, cls_logits = decode_head_output(out, model.anchor_sizes, stride)
             conf = torch.sigmoid(conf_logits)
             # per-image decode
             for bi in range(Xb.size(0)):
@@ -154,8 +181,8 @@ def evaluate_map50(model: nn.Module,
                 boxes = pred_boxes[bi]
                 cls_scores = torch.softmax(cls_logits[bi], dim=-1)
                 # optional pre-filter by confidence threshold
-                if conf_thres is not None and conf_thres > 0:
-                    mask = scores > conf_thres
+                if prefilter_thres is not None and prefilter_thres > 0:
+                    mask = scores > prefilter_thres
                     if mask.sum() == 0:
                         continue
                     scores = scores[mask]
@@ -173,7 +200,10 @@ def evaluate_map50(model: nn.Module,
                 scores = scores * probs
                 if scores.numel() == 0:
                     continue
-                keep = nms_xywh(boxes, scores, nms_iou)
+                if agnostic_nms:
+                    keep = nms_xywh(boxes, scores, nms_iou)
+                else:
+                    keep = nms_xywh_classwise(boxes, scores, labels, nms_iou)
                 if len(keep) == 0:
                     continue
                 boxes = boxes[keep]
@@ -289,8 +319,45 @@ def evaluate_map50(model: nn.Module,
     if not valid:
         return (0.0, aps, gt_count_per_class, recalls, precisions) if return_aps else 0.0
     m = float(np.mean(valid))
+    # fixed-threshold PR (per-class TP/FP/FN + micro/macro)
+    fixed_reports: Dict[str, Dict[str, object]] = {}
+    for th in eval_conf_thres:
+        tp_list = []
+        fp_list = []
+        fn_list = []
+        per_class = []
+        for c in range(num_classes):
+            gt = gt_count_per_class[c]
+            if gt <= 0:
+                continue
+            entries = preds_per_class[c]
+            tp = sum(1 for s, is_tp in entries if s >= th and is_tp == 1)
+            fp = sum(1 for s, is_tp in entries if s >= th and is_tp == 0)
+            fn = max(0, gt - tp)
+            prec = tp / (tp + fp + 1e-6)
+            rec = tp / (tp + fn + 1e-6)
+            per_class.append((c, tp, fp, fn, prec, rec, gt))
+            tp_list.append(tp)
+            fp_list.append(fp)
+            fn_list.append(fn)
+        if tp_list:
+            micro_tp = sum(tp_list)
+            micro_fp = sum(fp_list)
+            micro_fn = sum(fn_list)
+            micro_p = micro_tp / (micro_tp + micro_fp + 1e-6)
+            micro_r = micro_tp / (micro_tp + micro_fn + 1e-6)
+            macro_p = sum(p for _, _, _, _, p, _, _ in per_class) / max(1, len(per_class))
+            macro_r = sum(r for _, _, _, _, _, r, _ in per_class) / max(1, len(per_class))
+        else:
+            micro_p = micro_r = macro_p = macro_r = 0.0
+        fixed_reports[f"{th:.2f}"] = {
+            "per_class": per_class,
+            "micro": (micro_p, micro_r),
+            "macro": (macro_p, macro_r),
+        }
+
     if return_aps:
-        return m, aps, gt_count_per_class, recalls, precisions
+        return m, aps, gt_count_per_class, recalls, precisions, fixed_reports
     if per_class_ap:
         # print per-class metrics
         present = [(ci, aps[ci], recalls[ci], precisions[ci], gt_count_per_class[ci]) 
@@ -302,13 +369,36 @@ def evaluate_map50(model: nn.Module,
 
 
 class ModelWrap(nn.Module):
-    def __init__(self, num_classes: int, anchor_sizes: List[Tuple[int, int]], in_ch: int = 3):
+    def __init__(
+        self,
+        num_classes: int,
+        anchor_sizes: List[Tuple[int, int]] | None = None,
+        anchor_sizes_levels: List[List[Tuple[int, int]]] | None = None,
+        in_ch: int = 3,
+        multi_scale: bool = False,
+    ):
         super().__init__()
         self.backbone = SMNetBackbone(in_ch=in_ch, base=64)
-        self.head = AnchorHead(ch=64, num_classes=num_classes, anchor_sizes=anchor_sizes)
-        self.anchor_sizes = anchor_sizes
+        self.multi_scale = bool(multi_scale)
+        if self.multi_scale:
+            if not anchor_sizes_levels:
+                raise ValueError("anchor_sizes_levels is required when multi_scale=True")
+            self.head = MultiScaleHead(ch=64, num_classes=num_classes, anchor_sizes_levels=anchor_sizes_levels)
+            self.anchor_sizes_levels = anchor_sizes_levels
+            self.strides = [8, 16, 32]
+            self.anchor_sizes = None
+        else:
+            if not anchor_sizes:
+                raise ValueError("anchor_sizes is required when multi_scale=False")
+            self.head = AnchorHead(ch=64, num_classes=num_classes, anchor_sizes=anchor_sizes)
+            self.anchor_sizes = anchor_sizes
+            self.anchor_sizes_levels = None
+            self.strides = [16]
 
     def forward(self, x: torch.Tensor):
+        if self.multi_scale:
+            feats = self.backbone(x, return_pyramid=True)
+            return self.head(feats)
         fused = self.backbone(x)
         return self.head(fused)
 
@@ -354,7 +444,10 @@ def train_one_epoch(model: ModelWrap,
 
         with autocast(device_type='cuda', enabled=device_is_cuda):
             out = model(Xb)
-            conf_logits, pred_boxes, cls_logits = decode_head_output(out, model.anchor_sizes, stride)
+            if model.multi_scale:
+                conf_logits, pred_boxes, cls_logits = decode_multi_head_output(out, model.anchor_sizes_levels, model.strides)
+            else:
+                conf_logits, pred_boxes, cls_logits = decode_head_output(out, model.anchor_sizes, stride)
             loss, stat = criterion(conf_logits, pred_boxes, cls_logits, anchors_pix, targets)
             loss = loss / float(max(1, accumulation_steps))
 
@@ -410,8 +503,15 @@ def main():
         default="6x5,7x6,10x5,12x6,12x6,12x7,8x19,7x23,7x23,8x22,7x29,18x16,19x20,34x22",
         help="Comma-separated WxH list for the single 32x32 grid (e.g. '6x5,7x6,...'). We'll auto-sort by area (small->large).",
     )
+    ap.add_argument("--multi-scale", action="store_true", help="Enable true multi-scale detection (P2/P3/P4)")
+    ap.add_argument("--anchor-sizes-p2", type=str, default="", help="Comma-separated WxH list for P2 (64x64, stride=8)")
+    ap.add_argument("--anchor-sizes-p3", type=str, default="", help="Comma-separated WxH list for P3 (32x32, stride=16)")
+    ap.add_argument("--anchor-sizes-p4", type=str, default="", help="Comma-separated WxH list for P4 (16x16, stride=32)")
     ap.add_argument("--conf-thres", type=float, default=0.05)
     ap.add_argument("--nms-iou", type=float, default=0.5)
+    ap.add_argument("--agnostic-nms", action="store_true", help="Use class-agnostic NMS (default is class-wise)")
+    ap.add_argument("--eval-conf-thres", type=str, default="0.05,0.25,0.5",
+                    help="Comma-separated conf thresholds for fixed-PR evaluation")
     ap.add_argument("--pos-iou", type=float, default=0.5, help="Positive IOU threshold for anchor assignment")
     ap.add_argument("--neg-iou", type=float, default=0.4, help="Negative IOU threshold for anchor assignment")
     ap.add_argument("--conf-loss", type=str, default="bce", choices=["bce","focal"], help="Confidence loss type")
@@ -578,9 +678,39 @@ def main():
         print("[model] input channels = 3 (golden triplet order: Log-Spec, Gray-Norm, Corner-Mask)")
     else:
         print(f"[model] input channels = {in_ch} (golden triplet + {in_ch - 3} extra maps)")
-    model = ModelWrap(num_classes=args.num_classes,
-                      anchor_sizes=anchor_sizes,
-                      in_ch=in_ch).to(device)
+    if args.multi_scale:
+        def _split_sizes(sizes: List[Tuple[int, int]]) -> Tuple[List[Tuple[int, int]], List[Tuple[int, int]], List[Tuple[int, int]]]:
+            n = len(sizes)
+            if n <= 2:
+                return sizes, sizes, sizes
+            k1 = max(1, n // 3)
+            k2 = max(k1 + 1, (2 * n) // 3)
+            p2 = sizes[:k1]
+            p3 = sizes[k1:k2]
+            p4 = sizes[k2:]
+            return p2 or sizes, p3 or sizes, p4 or sizes
+
+        p2_sizes = sort_anchor_sizes(parse_anchor_sizes(args.anchor_sizes_p2)) if args.anchor_sizes_p2.strip() else None
+        p3_sizes = sort_anchor_sizes(parse_anchor_sizes(args.anchor_sizes_p3)) if args.anchor_sizes_p3.strip() else None
+        p4_sizes = sort_anchor_sizes(parse_anchor_sizes(args.anchor_sizes_p4)) if args.anchor_sizes_p4.strip() else None
+        if p2_sizes is None or p3_sizes is None or p4_sizes is None:
+            sp2, sp3, sp4 = _split_sizes(anchor_sizes)
+            p2_sizes = p2_sizes or sp2
+            p3_sizes = p3_sizes or sp3
+            p4_sizes = p4_sizes or sp4
+        anchor_sizes_levels = [p2_sizes, p3_sizes, p4_sizes]
+        print(f"[anchors][p2] {p2_sizes}")
+        print(f"[anchors][p3] {p3_sizes}")
+        print(f"[anchors][p4] {p4_sizes}")
+        model = ModelWrap(num_classes=args.num_classes,
+                          anchor_sizes_levels=anchor_sizes_levels,
+                          in_ch=in_ch,
+                          multi_scale=True).to(device)
+    else:
+        model = ModelWrap(num_classes=args.num_classes,
+                          anchor_sizes=anchor_sizes,
+                          in_ch=in_ch,
+                          multi_scale=False).to(device)
 
     if args.init_weights:
         ckpt_path = Path(args.init_weights)
@@ -630,9 +760,16 @@ def main():
         for _ in range(start_epoch - args.warmup - 1):
             scheduler.step()
 
-    # anchors tensor (pixels) for fused 32x32 grid (stride 16)
-    stride, grid_h, grid_w = 16, 32, 32
-    anchors_pix = generate_anchors(grid_h, grid_w, stride, anchor_sizes).to(device)
+    # anchors tensor (pixels)
+    if args.multi_scale:
+        anchors_p2 = generate_anchors(64, 64, 8, anchor_sizes_levels[0])
+        anchors_p3 = generate_anchors(32, 32, 16, anchor_sizes_levels[1])
+        anchors_p4 = generate_anchors(16, 16, 32, anchor_sizes_levels[2])
+        anchors_pix = torch.cat([anchors_p2, anchors_p3, anchors_p4], dim=0).to(device)
+        stride = 16
+    else:
+        stride, grid_h, grid_w = 16, 32, 32
+        anchors_pix = generate_anchors(grid_h, grid_w, stride, anchor_sizes).to(device)
 
     # training loop (start from start_epoch if resumed)
     # fast-mode: 提高验证间隔，减少评估开销
@@ -651,16 +788,28 @@ def main():
         # evaluate mAP@0.5 according to val interval
         if epoch % args.val_interval == 0 or epoch == args.epochs:
             vis_dir = out_dir / 'vis'
-            map50, aps, gtc, recalls, precisions = evaluate_map50(model, anchors_pix, stride, val_loader, args.num_classes,
-                                   conf_thres=args.conf_thres, nms_iou=args.nms_iou, device=device,
-                                   max_batches=args.max_val_steps, eval_topk=300, return_aps=True,
-                                   dump_vis=args.dump_vis, vis_dir=vis_dir, per_class_ap=args.per_class_ap)
-            print(f"  val: mAP@0.5={map50:.4f}")
+            eval_conf_thres = [float(x) for x in args.eval_conf_thres.split(',') if x.strip()]
+            map50, aps, gtc, recalls, precisions, fixed_reports = evaluate(
+                model, anchors_pix, stride, val_loader, args.num_classes,
+                conf_thres=args.conf_thres, nms_iou=args.nms_iou, eval_conf_thres=eval_conf_thres,
+                agnostic_nms=args.agnostic_nms, device=device, max_batches=args.max_val_steps,
+                eval_topk=300, return_aps=True, dump_vis=args.dump_vis, vis_dir=vis_dir,
+                per_class_ap=args.per_class_ap
+            )
+            print(f"  val: AP50(VOC07 11-pt)={map50:.4f}")
             if args.per_class_ap:
                 present = [(i, float(aps[i]), float(recalls[i]), float(precisions[i]), int(gtc[i])) 
                            for i in range(len(aps)) if gtc[i] > 0]
                 print("  per-class AP: [(class_id, AP, Recall@F1, Prec@F1, #GT)]")
                 print(f"  {present}")
+            # fixed-threshold PR outputs
+            for th_key, rep in fixed_reports.items():
+                micro_p, micro_r = rep["micro"]
+                macro_p, macro_r = rep["macro"]
+                print(f"  PR@conf>={th_key} (IoU=0.5): micro P={micro_p:.4f} R={micro_r:.4f} | macro P={macro_p:.4f} R={macro_r:.4f}")
+                if args.per_class_ap:
+                    print("    per-class (cls, TP, FP, FN, P, R, #GT):")
+                    print(f"    {rep['per_class']}")
             # epoch log -> jsonl
             log_dict = {
                 'epoch': epoch,
