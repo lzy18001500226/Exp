@@ -167,7 +167,7 @@ class SMNetBackbone(nn.Module):
             nn.ReLU(inplace=True),
         )
 
-    def forward(self, x: torch.Tensor, return_pyramid: bool = False):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         if self.use_extra:
             rgb = x[:, :3]
             extra = x[:, 3:]
@@ -191,8 +191,6 @@ class SMNetBackbone(nn.Module):
         p4 = self.p4(p3)
 
         fused = self.conv_mid(p3) + self.down_from_p2(p2) + self.up_from_p4(p4)
-        if return_pyramid:
-            return [p2, p3, p4]
         return fused
 
     def _maybe_log_attention(self) -> None:

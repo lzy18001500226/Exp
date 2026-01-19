@@ -10,7 +10,7 @@ SMNet 是单模态 RF 信号目标检测框架，采用**黄金三通道**特征
 - **黄金三通道 (Golden Triplet)**: `[Log-Spec, Gray-Norm, Corner-Mask]` 三通道特征融合
 - **三阶段训练**: Stage A (纯前景) → Stage B (引入背景) → Stage C (精选类微调)
 - **Anchor-based 检测**: 单尺度 32×32 特征图 + 多尺度 Anchor + CenterNet-style 检测头
-- **Focal Loss + Hard Negative Mining**: 解决正负样本不平衡
+- **BCE/Focal + Hard Negative Mining**: 置信度损失可选 BCE 或 Focal；支持 Hard Neg Mining
 
 ---
 
@@ -344,9 +344,11 @@ python D:/Exp/SMNet/Tools/split_train_val.py `
 
 训练入口统一为 `scripts/train_npz_fcs.py`，其特性：
 
-- 默认读取 `golden_triplet`，并在日志中打印“ChannelAttention active...”提示。
+- 默认读取 `golden_triplet`（不足时可 fallback 到 `features/feature_stack/pseudo_rgb/image/X`）。
 - `--anchor-sizes` 仅需提供一串 `WxH`，脚本会按照面积自动排序并在日志中输出最终顺序。
 - `dump_vis` 会同时产出 JSON 与 PNG（R=Log, G=Gray, B=Corner），方便核对 Corner 通道是否点亮。
+- 支持 `--conf-loss bce|focal` 与 `--neg-topk-ratio`（Hard Neg Mining）。
+- **评估默认输出论文口径指标**：`AvgP/AvgR/AvgF1@conf=0.5`（IoU=0.5）。如需 AP50，显式加 `--ap50`。
 
 ### 推荐 baseline Anchor 字符串
 
@@ -380,7 +382,7 @@ python D:/Exp/SMNet/scripts/train_npz_fcs.py `
   --anchor-sizes "6x5,7x6,10x5,12x6,12x6,12x6,12x7,8x19,7x23,7x23,8x22,7x29,18x16,19x20,34x22" `
   --out D:/Exp/SMNet/runs/exp_stageA `
   --val-interval 2 `
-  --per-class-ap
+  --paper-conf 0.5
 ```
 
 ### 阶段 B 示例（0–23 + 背景）
@@ -401,15 +403,14 @@ python D:/Exp/SMNet/scripts/train_npz_fcs.py `
   --out D:/Exp/SMNet/runs/exp_stageB `
   --init-weights D:/Exp/SMNet/runs/exp_stageA/best.pth `
   --val-interval 2 `
-  --per-class-ap `
+  --paper-conf 0.5 `
   --lr 5e-4
 ```
 
 ### 阶段 C 示例（15 类精选）
 
 ```powershell
- `
-  --lr 5e-4python D:/Exp/SMNet/scripts/train_npz_fcs.py `
+python D:/Exp/SMNet/scripts/train_npz_fcs.py `
   --train-json D:/Exp/SMNet/FCSData/splits_stageC/train.json `
   --val-json   D:/Exp/SMNet/FCSData/splits_stageC/val.json `
   --epochs 60 `
@@ -422,7 +423,7 @@ python D:/Exp/SMNet/scripts/train_npz_fcs.py `
   --out D:/Exp/SMNet/runs/exp_stageC `
   --init-weights D:/Exp/SMNet/runs/exp_stageB/best.pth `
   --val-interval 2 `
-  --per-class-ap `
+  --paper-conf 0.5 `
   --dump-vis 10 `
   --lr 1e-4
 ```
@@ -434,49 +435,27 @@ python D:/Exp/SMNet/scripts/train_npz_fcs.py `
 - Mixup 与水平翻转已解耦，是否启用互不影响。
 - 若 GPU 显存紧张，可用 `--accumulation-steps 2` 实现梯度累积；脚本会自动除以步数。
 - **跨阶段衔接时请使用 `--init-weights`**：它只加载上一阶段的模型权重，训练会从 epoch=1 重新计数；若误用 `--resume`，会因为继承旧的 `epoch`/optimizer 状态而直接跳过整个训练循环。
+- 评估默认输出论文口径：`AvgP/AvgR/AvgF1@conf=0.5 (IoU=0.5)`；如需 AP50，显式加 `--ap50`。
+- `--paper-conf/--paper-iou` 控制论文口径阈值；`--conf-thres` 仅影响 AP50 的预筛选阈值。
 
 ---
 
-## 近期训练改动（已生效）
+## 当前实现要点（与代码一致）
 
-以下改动已集成到代码中，**无需重做数据集**，直接按原训练流程运行即可生效：
+以下为当前代码已实现的训练/评估要点（无需额外开关）：
 
-### 1) 回归损失：SmoothL1 → CIoU
+1) **回归损失：SmoothL1**
+  - 位置：`smnet_loss.py`
+  - 公式：$L_{reg}=\sum \mathrm{SmoothL1}(pred,gt)$
 
-- 位置：`smnet_loss.py`
-- 作用：小目标的回归梯度更稳定，定位更收敛
-- 公式：$L_{reg} = \sum (1 - \mathrm{CIoU})$
+2) **Objectness 目标为 1**
+  - 置信度目标为 1（非 IoU‑aware）
 
-### 2) IoU‑aware Objectness
+3) **单尺度检测**
+  - 单尺度 32×32 (stride=16)
 
-- 位置：`smnet_loss.py`
-- 由 `target_conf=1` 改为：
-  $target\_conf = \mathrm{IoU}(pred\_box, gt\_box)$
-- 推理分数：$score=\sigma(conf)\cdot \max softmax$ 直接带定位质量
-
-### 3) 真实多尺度检测（可选）
-
-- 默认仍是单尺度（32×32, stride=16）
-- 启用方式：
-
-```
---multi-scale
-```
-
-- 可分层配置 anchor：
-
-```
---anchor-sizes-p2 "4x4,5x4,6x5"   # P2 (64×64, stride=8) 小目标
---anchor-sizes-p3 "7x6,10x5,12x6" # P3 (32×32, stride=16) 中目标
---anchor-sizes-p4 "18x16,19x20,34x22" # P4 (16×16, stride=32) 大目标
-```
-
-若未显式指定，脚本会按面积自动把 `--anchor-sizes` 三等分给 P2/P3/P4。
-
-### 4) 评估口径对齐
-
-- 已支持固定阈值 PR 与 best‑F1 PR 并存
-- 默认 class‑wise NMS（可加 `--agnostic-nms` 回退）
+4) **评估：论文口径 AvgP/AvgR/AvgF1（IoU=0.5, conf=0.5）**
+  - 如需 AP50（VOC07 11-point），加 `--ap50`
 
 ---
 
@@ -512,55 +491,23 @@ python D:/Exp/SMNet/scripts/train_npz_fcs.py `
 
 ---
 
-## 评估口径（对齐论文）
+## 评估口径（当前实现）
 
-> 论文：Yu 等，SMNet Multi-Drone Detect… Table III 使用 **IoU=0.5** 判 TP/FP/FN，并报告每类 Precision/Recall。
+当前脚本默认输出 **论文口径**：
 
-为避免“阈值口径不一致”的争议，评估输出**拆成三套**同时保留：
+- IoU 阈值固定为 0.5
+- 置信度阈值固定为 `--paper-conf`（默认 0.5）
+- 输出 `AvgP/AvgR/AvgF1`
 
-### 1) PR@固定阈值（论文对齐）
+可选：
 
-- **IoU 阈值固定为 0.5**
-- **置信度阈值固定**：默认 `{0.05, 0.25, 0.5}` 三组
-- 输出：
-  - 每类 `TP/FP/FN` 与 `Precision/Recall`
-  - **micro 平均**（按样本加权）
-  - **macro 平均**（每类一票，更接近论文表格）
-
-可通过参数调整阈值：
-
-```
---eval-conf-thres 0.05,0.25,0.5
-```
-
-### 2) PR@best-F1（调参用）
-
-当前脚本保留原有 **best-F1 扫阈值**方式，输出每类 Recall/Precision：
-
-- **用途**：调参/对比
-- **注意**：不作为论文对齐指标
-
-### 3) AP50（VOC07 11-point）
-
-仍保留 AP50 (VOC07 11-point) 计算，但**需明确说明**：
-
-- 不是 COCO mAP
-- 仅用于内部对比，不应与论文 mAP 混用
+- `--ap50` 额外输出 AP50（VOC07 11-point）
 
 ---
 
 ## NMS 设置（重要）
 
-当前评估默认使用 **class-wise NMS**（每类单独 NMS），避免多类互相抑制：
-
-- ✅ 更符合“多无人机/多目标同屏”场景
-- ✅ 明显提升 recall
-
-如需回退到旧版 **class-agnostic NMS**，可加：
-
-```
---agnostic-nms
-```
+当前评估使用 **class-agnostic NMS**（所有类别一起抑制），阈值由 `--nms-iou` 控制。
 
 黄金三通道 & Dataset 注意事项
 -----------------------------
