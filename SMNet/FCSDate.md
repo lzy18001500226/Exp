@@ -392,7 +392,6 @@ python D:/Exp/SMNet/scripts/train_npz_fcs.py `
   --neg-topk-ratio 2 `
   --w-conf 3.0 --w-reg 1.0 --w-cls 1.0 `
   --mixup-prob 0.0 `
-  --aug-freq-shift --freq-shift-max 8 `
   --anchor-sizes "6x5,7x6,10x5,12x6,12x6,12x6,12x7,8x19,7x23,7x23,8x22,7x29,18x16,19x20,34x22" `
   --out D:/Exp/SMNet/runs/exp_stageA `
   --val-interval 2 `
@@ -413,7 +412,6 @@ python D:/Exp/SMNet/scripts/train_npz_fcs.py `
   --mixup-alpha 0.5 `
   --neg-topk-ratio 2 `
   --w-conf 3.0 --w-reg 1.0 --w-cls 1.0 `
-  --aug-freq-shift --freq-shift-max 8 `
   --anchor-sizes "6x5,7x6,10x5,12x6,12x6,12x6,12x7,8x19,7x23,7x23,8x22,7x29,18x16,19x20,34x22" `
   --background-json D:/Exp/SMNet/FCSData/splits_stageB/background.json `
   --background-frac 0.15 `
@@ -431,17 +429,14 @@ python D:/Exp/SMNet/scripts/train_npz_fcs.py `
 python D:/Exp/SMNet/scripts/train_npz_fcs.py `
   --train-json D:/Exp/SMNet/FCSData/splits_stageC/train.json `
   --val-json   D:/Exp/SMNet/FCSData/splits_stageC/val.json `
-  --epochs 40 `
+  --epochs 50 `
   --batch 32 `
   --hflip `
-  --mixup-prob 0.5 `
-  --mixup-alpha 0.5 `
-  --neg-topk-ratio 2 `
+  --mixup-prob 0.2 `
+  --mixup-alpha 0.4 `
+  --neg-topk-ratio 1 `
   --w-conf 3.0 --w-reg 1.0 --w-cls 1.0 `
-  --aug-freq-shift --freq-shift-max 8 `
-  --aug-time-stretch --time-stretch-range 0.9,1.1 `
-  --aug-noise --noise-k-range 0.01,0.05 `
-  --aug-specaug --specaug-time-max 2 --specaug-freq-max 2 --specaug-time-ratio 0.2 --specaug-freq-ratio 0.2 `
+  --aug-freq-shift --freq-shift-max 1 `
   --anchor-sizes "6x5,7x6,10x5,12x6,12x6,12x6,12x7,8x19,7x23,7x23,8x22,7x29,18x16,19x20,34x22" `
   --out D:/Exp/SMNet/runs/exp_stageC `
   --init-weights D:/Exp/SMNet/runs/exp_stageB/best.pth `
