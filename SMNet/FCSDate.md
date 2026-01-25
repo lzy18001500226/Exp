@@ -1,5 +1,5 @@
 SMNet 数据准备与训练流程（FCS 信号检测）
-=========================================
+========================================
 
 ## 概述
 
@@ -57,6 +57,7 @@ D:/Exp/
 --------
 
 ### 系统要求
+
 - **操作系统**: Windows 10/11 + PowerShell 5.1+
 - **Python**: 3.9+ (Conda 环境 `dronerfa`)
 - **GPU**: NVIDIA GPU with CUDA 11.8+ (推荐 12GB+ 显存)
@@ -65,6 +66,7 @@ D:/Exp/
   - 三阶段训练 + 检查点: ~20 GB
 
 ### 依赖安装
+
 ```powershell
 conda activate dronerfa
 pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
@@ -80,16 +82,17 @@ pip install numpy opencv-python Pillow tqdm
 `convert_to_npz.py` 从原始单通道光谱 `spec_512` 生成三个互补特征：
 
 1. **Log-Spec (对数光谱)**
+
    - 计算: `log1p(spec)` 后百分位归一化 (p1-p99)
    - 作用: 增强低能量区域细节，压缩动态范围
    - 通道位置: `golden_triplet[0]`
-
 2. **Gray-Norm (灰度归一化)**
+
    - 计算: 原始光谱的百分位归一化 (p1-p99)
    - 作用: 保留原始强度分布，提供基准参考
    - 通道位置: `golden_triplet[1]`
-
 3. **Corner-Mask (角点掩码)**
+
    - 计算: Harris 角点检测 → 高斯平滑 → 形态学清理 → 二值化
    - 参数:
      - `gaussian_radius=2`: 角点响应平滑半径
@@ -103,17 +106,17 @@ pip install numpy opencv-python Pillow tqdm
 
 转换后的 NPZ 包含以下键：
 
-| 键名 | 形状 | 类型 | 说明 |
-|------|------|------|------|
-| `golden_triplet` | `[3,512,512]` | float32 | **主特征**: 黄金三通道，值域 `[0,1]` |
-| `image` | `[512,512,3]` | uint8 | 伪彩预览 (R=Log, G=Edge, B=Corner) |
-| `mask` | `[512,512]` | uint8 | 从 LabelMe shapes 生成的类别掩码 |
-| `bboxes` | `[N,5]` | float32 | 边界框 `[x1,y1,x2,y2,class]` (像素坐标) |
-| `label_json` | scalar | str | 原始 JSON 标注文件内容 |
-| `class_id` | scalar | int32 | 类别 ID (从目录名推断) |
-| `gray_norm` | `[512,512]` | float32 | 灰度归一化 (可用于 `--extra-keys`) |
-| `corner_mask_clean` | `[512,512]` | float32 | 清理后的角点掩码 |
-| `source_npz` | scalar | str | 原始 NPZ 路径 |
+| 键名                  | 形状            | 类型    | 说明                                         |
+| --------------------- | --------------- | ------- | -------------------------------------------- |
+| `golden_triplet`    | `[3,512,512]` | float32 | **主特征**: 黄金三通道，值域 `[0,1]` |
+| `image`             | `[512,512,3]` | uint8   | 伪彩预览 (R=Log, G=Edge, B=Corner)           |
+| `mask`              | `[512,512]`   | uint8   | 从 LabelMe shapes 生成的类别掩码             |
+| `bboxes`            | `[N,5]`       | float32 | 边界框 `[x1,y1,x2,y2,class]` (像素坐标)    |
+| `label_json`        | scalar          | str     | 原始 JSON 标注文件内容                       |
+| `class_id`          | scalar          | int32   | 类别 ID (从目录名推断)                       |
+| `gray_norm`         | `[512,512]`   | float32 | 灰度归一化 (可用于 `--extra-keys`)         |
+| `corner_mask_clean` | `[512,512]`   | float32 | 清理后的角点掩码                             |
+| `source_npz`        | scalar          | str     | 原始 NPZ 路径                                |
 
 ### 1.3 执行转换
 
@@ -134,35 +137,35 @@ python D:/Exp/SMNet/Tools/convert_to_npz.py `
 
 #### 参数说明
 
-| 参数 | 默认值 | 说明 |
-|------|--------|------|
-| `--source-root` | `D:/Exp/Data-512NPZ` | 原始 NPZ 根目录（包含 0-23 子目录） |
-| `--label-root` | `D:/Exp/FCSLabel` | LabelMe JSON 标注根目录 |
-| `--output-root` | `D:/Exp/SMNet/FCSData` | 输出目录 |
-| `--stem-min` | None | 文件名前缀最小值（如 `0-a.npz` → 0） |
-| `--stem-max` | None | 文件名前缀最大值（如 `200-b.npz` → 200） |
-| `--classes` | None | 指定转换的类别列表（如 `--classes 1 3 5`） |
-| `--use-png-mask-fallback` | False | JSON 缺失时尝试加载 PNG 掩码 |
-| `--overwrite` | False | 覆盖已存在的输出文件 |
-| `--label-suffix` | `.json` | 标注文件后缀 |
-| `--print-every` | 100 | 进度打印间隔 |
+| 参数                        | 默认值                   | 说明                                         |
+| --------------------------- | ------------------------ | -------------------------------------------- |
+| `--source-root`           | `D:/Exp/Data-512NPZ`   | 原始 NPZ 根目录（包含 0-23 子目录）          |
+| `--label-root`            | `D:/Exp/FCSLabel`      | LabelMe JSON 标注根目录                      |
+| `--output-root`           | `D:/Exp/SMNet/FCSData` | 输出目录                                     |
+| `--stem-min`              | None                     | 文件名前缀最小值（如 `0-a.npz` → 0）      |
+| `--stem-max`              | None                     | 文件名前缀最大值（如 `200-b.npz` → 200）  |
+| `--classes`               | None                     | 指定转换的类别列表（如 `--classes 1 3 5`） |
+| `--use-png-mask-fallback` | False                    | JSON 缺失时尝试加载 PNG 掩码                 |
+| `--overwrite`             | False                    | 覆盖已存在的输出文件                         |
+| `--label-suffix`          | `.json`                | 标注文件后缀                                 |
+| `--print-every`           | 100                      | 进度打印间隔                                 |
 
 #### 执行要点
 
 1. **健康报告检查**: 转换完成后自动生成 `SMNet/FCSData/npz_health_report.json`
+
    ```powershell
    Get-Content D:/Exp/SMNet/FCSData/npz_health_report.json | ConvertFrom-Json
    ```
-   
+
    关键指标：
+
    - `golden_triplet_range`: **必须在 `[0,1]` 范围内**，否则特征计算有误
    - `converted`: 成功转换的样本数
    - `empty_boxes`: 无框样本数（Stage A/C 会过滤掉）
    - `missing_label_json`: 缺失标注的样本数
    - `per_class`: 每类统计（source/converted/with_boxes/boxes）
-
 2. **增量更新**: 新增标注后只需删除对应 NPZ 文件，重新运行转换（不加 `--overwrite` 则跳过已存在文件）
-
 3. **验证集同步**: **必须对验证集数据也执行相同转换**，否则 mAP 计算会失真
 
 ### 1.4 可视化验证
@@ -184,11 +187,13 @@ python D:/Exp/SMNet/Tools/preview_npz.py `
 ```
 
 预览图说明：
+
 - **R 通道 (红色)**: Log-Spec，应显示清晰的信号轮廓
 - **G 通道 (绿色)**: Gray-Norm，保留原始亮度分布
 - **B 通道 (蓝色)**: Corner-Mask，信号关键点应点亮
 
 **异常诊断**：
+
 - B 通道全黑 → Corner 参数过严或信号过弱
 - R 通道过暗 → Log 归一化失败，检查 `spec_512` 值域
 - G 通道溢出 → 原始光谱超过 [0,1] 范围
@@ -201,13 +206,14 @@ python D:/Exp/SMNet/Tools/preview_npz.py `
 
 SMNet 采用**三阶段课程学习**解决小目标检测难题：
 
-| 阶段 | 类别集合 | 样本类型 | 训练目标 | Epoch | 学习率 |
-|------|---------|---------|---------|-------|--------|
-| **Stage A** | 1-23 (纯前景) | 仅包含目标的样本 | 学习前景特征，避免背景干扰 | 20 | 1e-3 |
-| **Stage B** | 0-23 (全类别) | 前景 + 15% 背景混合 | 学习前景-背景区分能力 | 20 | 5e-4 |
-| **Stage C** | 15 精选类 | 筛选高质量类别 | 微调精度，减少类间混淆 | 80 | 1e-4 |
+| 阶段              | 类别集合      | 样本类型            | 训练目标                   | Epoch | 学习率 |
+| ----------------- | ------------- | ------------------- | -------------------------- | ----- | ------ |
+| **Stage A** | 1-23 (纯前景) | 仅包含目标的样本    | 学习前景特征，避免背景干扰 | 20    | 1e-3   |
+| **Stage B** | 0-23 (全类别) | 前景 + 15% 背景混合 | 学习前景-背景区分能力      | 20    | 5e-4   |
+| **Stage C** | 15 精选类     | 筛选高质量类别      | 微调精度，减少类间混淆     | 80    | 1e-4   |
 
-**Stage C 精选类** (15 个): `1, 3, 4, 5, 6, 8, 10, 11, 14, 15, 16, 17, 18, 19, 21`  
+**Stage C 精选类** (15 个): `1, 3, 4, 5, 6, 8, 10, 11, 14, 15, 16, 17, 18, 19, 21`
+
 - 筛选依据: 样本量充足 (≥50) + 标注质量高 + 类内一致性好
 
 ### 2.2 划分工具说明
@@ -239,10 +245,12 @@ python D:/Exp/SMNet/Tools/split_train_val.py `
 ```
 
 **输出文件**:
+
 - `splits_stageA/train.json`: 训练集路径列表 (~80% 样本)
 - `splits_stageA/val.json`: 验证集路径列表 (~20% 样本)
 
 **验证要点**:
+
 - 检查控制台输出的 `kept` 数量是否合理
 - 确认无 class=0 样本混入
 - 验证每类样本分布是否均衡
@@ -292,11 +300,13 @@ Copy-Item `
 ```
 
 **输出文件**:
+
 - `splits_stageB/train.json`: 包含前景的训练样本
 - `splits_stageB/val.json`: 验证集
 - `splits_stageB/background.json`: **纯背景池** (201 个 class=0 样本)
 
 **背景混合机制**:
+
 - 训练时通过 `--background-json` + `--background-frac 0.15` 控制
 - 从 background.json 随机采样 15% × 训练集大小的背景样本
 - 每个 epoch 重新采样，增加负样本多样性
@@ -320,10 +330,12 @@ python D:/Exp/SMNet/Tools/split_train_val.py `
 ```
 
 **输出文件**:
+
 - `splits_stageC/train.json`: 仅包含 15 个精选类的训练集
 - `splits_stageC/val.json`: 对应验证集
 
 **类别筛选依据**:
+
 - 样本量: ≥50 个标注样本
 - 标注质量: 边界框准确，无明显误标
 - 类间区分度: 与其他类特征差异明显
@@ -374,15 +386,18 @@ python D:/Exp/SMNet/Tools/analyze_label_sizes.py `
 python D:/Exp/SMNet/scripts/train_npz_fcs.py `
   --train-json D:/Exp/SMNet/FCSData/splits_stageA/train.json `
   --val-json   D:/Exp/SMNet/FCSData/splits_stageA/val.json `
-  --epochs 60 `
-  --batch 12 `
+  --epochs 80 `
+  --batch 32 `
   --hflip `
-  --neg-topk-ratio 3 `
+  --neg-topk-ratio 2 `
+  --w-conf 3.0 --w-reg 1.0 --w-cls 1.0 `
   --mixup-prob 0.0 `
+  --aug-freq-shift --freq-shift-max 8 `
   --anchor-sizes "6x5,7x6,10x5,12x6,12x6,12x6,12x7,8x19,7x23,7x23,8x22,7x29,18x16,19x20,34x22" `
   --out D:/Exp/SMNet/runs/exp_stageA `
   --val-interval 2 `
-  --paper-conf 0.5
+  --paper-conf 0.5 `
+  --plot-curves
 ```
 
 ### 阶段 B 示例（0–23 + 背景）
@@ -391,12 +406,14 @@ python D:/Exp/SMNet/scripts/train_npz_fcs.py `
 python D:/Exp/SMNet/scripts/train_npz_fcs.py `
   --train-json D:/Exp/SMNet/FCSData/splits_stageB/train.json `
   --val-json   D:/Exp/SMNet/FCSData/splits_stageB/val.json `
-  --epochs 30 `
-  --batch 12 `
+  --epochs 120 `
+  --batch 32 `
   --hflip `
-  --mixup-prob 0.35 `
-  --mixup-alpha 0.3 `
-  --neg-topk-ratio 3 `
+  --mixup-prob 0.5 `
+  --mixup-alpha 0.5 `
+  --neg-topk-ratio 2 `
+  --w-conf 3.0 --w-reg 1.0 --w-cls 1.0 `
+  --aug-freq-shift --freq-shift-max 8 `
   --anchor-sizes "6x5,7x6,10x5,12x6,12x6,12x6,12x7,8x19,7x23,7x23,8x22,7x29,18x16,19x20,34x22" `
   --background-json D:/Exp/SMNet/FCSData/splits_stageB/background.json `
   --background-frac 0.15 `
@@ -404,6 +421,7 @@ python D:/Exp/SMNet/scripts/train_npz_fcs.py `
   --init-weights D:/Exp/SMNet/runs/exp_stageA/best.pth `
   --val-interval 2 `
   --paper-conf 0.5 `
+  --plot-curves `
   --lr 5e-4
 ```
 
@@ -413,85 +431,58 @@ python D:/Exp/SMNet/scripts/train_npz_fcs.py `
 python D:/Exp/SMNet/scripts/train_npz_fcs.py `
   --train-json D:/Exp/SMNet/FCSData/splits_stageC/train.json `
   --val-json   D:/Exp/SMNet/FCSData/splits_stageC/val.json `
-  --epochs 60 `
-  --batch 12 `
+  --epochs 40 `
+  --batch 32 `
   --hflip `
-  --mixup-prob 0.35 `
-  --mixup-alpha 0.3 `
-  --neg-topk-ratio 3 `
+  --mixup-prob 0.5 `
+  --mixup-alpha 0.5 `
+  --neg-topk-ratio 2 `
+  --w-conf 3.0 --w-reg 1.0 --w-cls 1.0 `
+  --aug-freq-shift --freq-shift-max 8 `
+  --aug-time-stretch --time-stretch-range 0.9,1.1 `
+  --aug-noise --noise-k-range 0.01,0.05 `
+  --aug-specaug --specaug-time-max 2 --specaug-freq-max 2 --specaug-time-ratio 0.2 --specaug-freq-ratio 0.2 `
   --anchor-sizes "6x5,7x6,10x5,12x6,12x6,12x6,12x7,8x19,7x23,7x23,8x22,7x29,18x16,19x20,34x22" `
   --out D:/Exp/SMNet/runs/exp_stageC `
   --init-weights D:/Exp/SMNet/runs/exp_stageB/best.pth `
   --val-interval 2 `
   --paper-conf 0.5 `
+  --plot-curves `
   --dump-vis 10 `
   --lr 1e-4
 ```
 
-命令要点：
+### 关键参数解释
 
 - `--dump-vis` 输出 JSON + PNG，可检查 Corner 通道（B 通道）是否点亮。
-- `--resize` 仅支持 512，传入其它数值会强制改为 512 并在日志中提示。
 - Mixup 与水平翻转已解耦，是否启用互不影响。
 - 若 GPU 显存紧张，可用 `--accumulation-steps 2` 实现梯度累积；脚本会自动除以步数。
 - **跨阶段衔接时请使用 `--init-weights`**：它只加载上一阶段的模型权重，训练会从 epoch=1 重新计数；若误用 `--resume`，会因为继承旧的 `epoch`/optimizer 状态而直接跳过整个训练循环。
 - 评估默认输出论文口径：`AvgP/AvgR/AvgF1@conf=0.5 (IoU=0.5)`；如需 AP50，显式加 `--ap50`。
 - `--paper-conf/--paper-iou` 控制论文口径阈值；`--conf-thres` 仅影响 AP50 的预筛选阈值。
+- `--plot-curves` 会在每次验证后自动更新 `<out>/curve.png`。
+- `--agnostic-nms` 可切换为 class-agnostic NMS（默认 class-wise）。
+- `--resize` 仅支持 512，传入其它数值会强制改为 512 并在日志中提示。
+- `--optim sgd|adamw`：优化器类型（当前默认 adamw）。
+- `--momentum` / `--nesterov`：仅对 SGD 有效。
+- `--warmup`：前若干 epoch 线性 warmup。
+- `--conf-loss bce|focal`：置信度损失类型。
+- `--focal-alpha` / `--focal-gamma`：focal loss 参数。
+- `--neg-topk-ratio`：Hard Neg Mining 负样本上限比例。
+- `--background-frac` / `--background-max`：背景样本比例/上限。
+- `--paper-conf` / `--paper-iou`：论文口径 P/R 的阈值。
+- `--conf-thres`：仅用于 AP50 的预筛选阈值。
+- `--ap50`：额外输出 AP50（VOC07 11-point）。
+- `--plot-curves`：验证后自动刷新 `<out>/curve.png`。
+- `--subset-frac`：用训练集子集快速试验。
+- `--max-train-steps` / `--max-val-steps`：限制每个 epoch 的 batch 数。
+- `--num-workers`：DataLoader worker 数（Windows 遇到问题可设 0）。
+- `--batch-size`：`--batch` 的别名。
+- `--seed`：随机种子。
 
 ---
 
-## 当前实现要点（与代码一致）
-
-以下为当前代码已实现的训练/评估要点（无需额外开关）：
-
-1) **回归损失：SmoothL1**
-  - 位置：`smnet_loss.py`
-  - 公式：$L_{reg}=\sum \mathrm{SmoothL1}(pred,gt)$
-
-2) **Objectness 目标为 1**
-  - 置信度目标为 1（非 IoU‑aware）
-
-3) **单尺度检测**
-  - 单尺度 32×32 (stride=16)
-
-4) **评估：论文口径 AvgP/AvgR/AvgF1（IoU=0.5, conf=0.5）**
-  - 如需 AP50（VOC07 11-point），加 `--ap50`
-
----
-
-## P3 优化清单（常用且易落地）
-
-以下为检测任务中**常用、且工程容易加**的优化，按优先级列出：
-
-### P3‑1 EMA（Exponential Moving Average）
-
-- 训练仍用原模型更新
-- 验证 / 保存 best 用 EMA 模型
-- 在**小数据、噪声大**时提升更明显
-
-### P3‑2 Warmup + Cosine
-
-- 当前脚本已有 cosine 学习率
-- **必须启用 warmup**（参数 `--warmup`）
-- 特别是后续切换 ATSS/SimOTA 时，前期更容易不稳
-
-### P3‑3 Checkpoint Averaging / SWA
-
-- 训练末期对最后 $K$ 个 checkpoint 做平均
-- 可提升 P/R 稳定性与置信度标定
-
-### P3‑4 小规模系统调参流程（避免“没头绪”）
-
-建议使用以下四步快速定位瓶颈：
-
-1. **Overfit 50 张图**：loss 是否能降到很低，P/R 是否接近 1
-2. **打印正样本分配统计**：使用 P1‑0 的统计输出（pos/neg、IoU 分布）
-3. **固定 seed，单改一个变量**：anchor / assign / loss / aug 逐项验证
-4. **每次改动保留完整记录**：训练曲线 + PR@固定阈值 + PR@best‑F1 + per‑class 表
-
----
-
-## 评估口径（当前实现）
+## 评估口径
 
 当前脚本默认输出 **论文口径**：
 
@@ -507,7 +498,13 @@ python D:/Exp/SMNet/scripts/train_npz_fcs.py `
 
 ## NMS 设置（重要）
 
-当前评估使用 **class-agnostic NMS**（所有类别一起抑制），阈值由 `--nms-iou` 控制。
+当前评估默认使用 **class-wise NMS**（每类单独 NMS），阈值由 `--nms-iou` 控制。
+
+如需回退为 class-agnostic NMS：
+
+```
+--agnostic-nms
+```
 
 黄金三通道 & Dataset 注意事项
 -----------------------------
@@ -516,14 +513,6 @@ python D:/Exp/SMNet/scripts/train_npz_fcs.py `
 2. `extra_keys` 支持 `edges/corners/gray` 三类附加通道；日志中会记录“Loaded N channels from ... (+extras: ..)”。
 3. 验证集必须与训练集保持相同通道，否则损失会出现“花瓣”状震荡。
 4. `dump_vis` PNG：R=Log-Spec、G=Gray-Norm、B=Corner-Mask。如果 B 通道全黑，说明 Corner 预处理有问题；R 超暗则是 Log 归一化失败。
-
-Troubleshooting
----------------
-
-- **健康报告异常**：`golden_triplet_range` 如果突破 `[0,1]`，说明转换脚本被篡改或原始数据存在负值，请先修复输入。
-- **train/val JSON 无样本**：检查 `split_train_val.py` 的 `--keep-classes` 是否排除了全部类，必要时去掉 `--class-min`。
-- **PowerShell 报 `&&` 错误**：在 PowerShell 中使用 `;` 链接命令，或直接分行书写，如上例所示。
-- **缺少 `torch/opencv`**：确保始终在 `conda run -n dronerfa` 或 `conda activate dronerfa` 后运行脚本。
 
 附录：常用工具脚本
 ------------------

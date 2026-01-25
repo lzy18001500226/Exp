@@ -5,36 +5,28 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-class DepthwiseSeparableConv(nn.Module):
-    def __init__(self, in_ch: int, out_ch: int, k: int = 3, s: int = 1, p: int | None = None):
+class PositionalEncoding2D(nn.Module):
+    """Explicit position encoding P(n,m) with sin/cos over width index (paper-aligned)."""
+
+    def __init__(self):
         super().__init__()
-        if p is None:
-            p = k // 2
-        self.dw = nn.Conv2d(in_ch, in_ch, k, s, p, groups=in_ch, bias=False)
-        self.pw = nn.Conv2d(in_ch, out_ch, 1, 1, 0, bias=False)
-        self.bn = nn.BatchNorm2d(out_ch)
-        self.act = nn.ReLU(inplace=True)
+        self._cache: dict[tuple[int, int, torch.device, torch.dtype], torch.Tensor] = {}
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x = self.dw(x)
-        x = self.pw(x)
-        x = self.bn(x)
-        return self.act(x)
+        b, c, h, w = x.shape
+        key = (h, w, x.device, x.dtype)
+        if key in self._cache:
+            return x + self._cache[key]
 
-
-class TFBlock(nn.Module):
-    """Texture-focused block: depthwise separable conv + residual."""
-
-    def __init__(self, ch: int):
-        super().__init__()
-        self.conv1 = DepthwiseSeparableConv(ch, ch)
-        self.conv2 = DepthwiseSeparableConv(ch, ch)
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        identity = x
-        x = self.conv1(x)
-        x = self.conv2(x)
-        return x + identity
+        m = torch.arange(w, device=x.device, dtype=x.dtype)
+        n = torch.arange(h, device=x.device, dtype=x.dtype).unsqueeze(1)
+        omega = torch.pow(10000.0, -m / max(1.0, float(w)))
+        phase = n * omega.view(1, w)
+        mask = (m % 2 == 1).view(1, w)
+        P = torch.where(mask, torch.sin(phase), torch.cos(phase))
+        P = P.unsqueeze(0).unsqueeze(0)  # [1,1,H,W]
+        self._cache[key] = P
+        return x + P
 
 
 class AxialAttention(nn.Module):
@@ -53,149 +45,112 @@ class AxialAttention(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         b, c, h, w = x.shape
-        # time-axis context (along width)
         ctx_x = x.mean(dim=2)  # [b,c,w]
-        ctx_x = self.fx(ctx_x)  # [b,c,w]
+        ctx_x = self.fx(ctx_x)
         ctx_x = ctx_x.unsqueeze(2).expand(-1, -1, h, -1)
-        # freq-axis context (along height)
         ctx_y = x.mean(dim=3)  # [b,c,h]
-        ctx_y = self.fy(ctx_y)  # [b,c,h]
+        ctx_y = self.fy(ctx_y)
         ctx_y = ctx_y.unsqueeze(3).expand(-1, -1, -1, w)
         out = x + 0.5 * (ctx_x + ctx_y)
         return self.bn(out)
 
 
-class PFBlock(nn.Module):
+class DualAxisAttention(nn.Module):
+    """Paper-style dual-direction attention (original + transposed)."""
+
     def __init__(self, ch: int):
         super().__init__()
         self.ax = AxialAttention(ch)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.ax(x)
+        y1 = self.ax(x)
+        y2 = self.ax(x.transpose(2, 3)).transpose(2, 3)
+        return 0.5 * (y1 + y2)
 
 
-class ChannelAttention(nn.Module):
-    """Squeeze-and-Excitation style channel attention."""
-    def __init__(self, ch: int, reduction: int = 4):
+class PsiBlock(nn.Module):
+    """Standardized conv unit: Conv(3x3) + BN + ReLU + MaxPool(stride=2)."""
+
+    def __init__(self, in_ch: int, out_ch: int):
         super().__init__()
-        self.pool = nn.AdaptiveAvgPool2d(1)
-        self.fc = nn.Sequential(
-            nn.Linear(ch, max(4, ch // reduction), bias=False),
-            nn.ReLU(inplace=True),
-            nn.Linear(max(4, ch // reduction), ch, bias=False),
-            nn.Sigmoid()
-        )
-    
+        self.conv = nn.Conv2d(in_ch, out_ch, 3, 1, 1, bias=False)
+        self.bn = nn.BatchNorm2d(out_ch)
+        self.act = nn.ReLU(inplace=True)
+        self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        b, c, _, _ = x.shape
-        w = self.pool(x).view(b, c)
-        w = self.fc(w).view(b, c, 1, 1)
-        return x * w
+        x = self.conv(x)
+        x = self.bn(x)
+        x = self.act(x)
+        return self.pool(x)
 
 
 class SMNetBackbone(nn.Module):
-    """SMNet backbone with always-on channel attention over the leading triplet."""
+    """SMNet backbone aligned to paper: explicit PE + dual attention + Psi pyramid + fused 32x32 output."""
 
-    def __init__(self, in_ch: int = 3, base: int = 64):
+    def __init__(self, in_ch: int = 3, base: int = 32):
         super().__init__()
-        c1, c2, c3 = base, base * 2, base * 4
-        # RGB/golden stem (always assume first 3 channels reflect the golden triplet order)
-        self.rgb_stem = nn.Sequential(
-            nn.Conv2d(3, c1, 3, 2, 1, bias=False),  # -> 256x256
-            nn.BatchNorm2d(c1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(c1, c1, 3, 1, 1, bias=False),
-            nn.BatchNorm2d(c1),
-            nn.ReLU(inplace=True),
-        )
-        self.rgb_ca = ChannelAttention(c1)
         self.use_extra = in_ch > 3
-        if self.use_extra:
-            extra_ch = in_ch - 3
-            # Extra branch: preserve spatial resolution parity with rgb_stem output (256x256)
-            self.extra_branch = nn.Sequential(
-                nn.Conv2d(extra_ch, c1, 3, 2, 1, bias=False),  # -> 256x256
-                nn.BatchNorm2d(c1),
-                nn.ReLU(inplace=True),
-                nn.Conv2d(c1, c1, 3, 1, 1, bias=False),
-                nn.BatchNorm2d(c1),
-                nn.ReLU(inplace=True),
-            )
-            # Fuse concat([rgb, extra]) -> base
-            self.fuse = nn.Sequential(
-                nn.Conv2d(c1 * 2, c1, 1, 1, 0, bias=False),
-                nn.BatchNorm2d(c1),
-                nn.ReLU(inplace=True),
-            )
-        else:
-            self.extra_branch = None
-            self.fuse = None
-        self._attn_notice_printed = False
-        # stage2 -> 128x128 then 64x64
-        self.down2 = nn.Conv2d(c1, c2, 3, 2, 1, bias=False)
-        self.tf2 = TFBlock(c2)
-        self.pf2 = PFBlock(c2)
-        self.down2b = nn.Conv2d(c2, c2, 3, 2, 1, bias=False)
+        self.input_proj = nn.Conv2d(in_ch, 3, 1, 1, 0, bias=False) if self.use_extra else None
+        self.pos = PositionalEncoding2D()
+        self.attn = DualAxisAttention(3)
 
-        # stage3 -> 32x32
-        self.down3 = nn.Conv2d(c2, c3, 3, 2, 1, bias=False)
-        self.tf3 = TFBlock(c3)
-        self.pf3 = PFBlock(c3)
+        # Psi stack to produce 64/32/16 feature maps with paper channels
+        self.psi1 = PsiBlock(3, base)          # 512 -> 256
+        self.psi2 = PsiBlock(base, base * 2)   # 256 -> 128
+        self.psi3 = PsiBlock(base * 2, base * 4)   # 128 -> 64
+        self.psi4 = PsiBlock(base * 4, base * 8)   # 64 -> 32
+        self.psi5 = PsiBlock(base * 8, base * 16)  # 32 -> 16
 
-        # Feature projections for fusion (P2=64x64, P3=32x32, P4=16x16)
-        self.lateral2 = nn.Conv2d(c2, base, 1, 1, 0)
-        self.lateral3 = nn.Conv2d(c3, base, 1, 1, 0)
-        self.smooth2 = nn.Conv2d(base, base, 3, 1, 1)
-        self.smooth3 = nn.Conv2d(base, base, 3, 1, 1)
-        self.p4 = nn.Conv2d(base, base, 3, 2, 1)  # 32->16
-
-        # Fusion layers following Eq.(20)
+        # FPN-style fusion (paper Eq.19/20)
+        self.up_from_16 = nn.Sequential(
+            nn.Upsample(scale_factor=2.0, mode="nearest"),
+            nn.Conv2d(base * 16, base * 8, 1, 1, 0, bias=False),
+            nn.BatchNorm2d(base * 8),
+            nn.ReLU(inplace=True),
+        )
+        self.up_from_32 = nn.Sequential(
+            nn.Upsample(scale_factor=2.0, mode="nearest"),
+            nn.Conv2d(base * 8, base * 8, 1, 1, 0, bias=False),
+            nn.BatchNorm2d(base * 8),
+            nn.ReLU(inplace=True),
+        )
+        self.proj_64 = nn.Sequential(
+            nn.Conv2d(base * 4, base * 8, 1, 1, 0, bias=False),
+            nn.BatchNorm2d(base * 8),
+            nn.ReLU(inplace=True),
+        )
+        self.down_from_64 = nn.Sequential(
+            nn.Conv2d(base * 8, base * 8, 3, 2, 1, bias=False),
+            nn.BatchNorm2d(base * 8),
+            nn.ReLU(inplace=True),
+        )
         self.conv_mid = nn.Sequential(
-            nn.Conv2d(base, base, 3, 1, 1, bias=False),
-            nn.BatchNorm2d(base),
+            nn.Conv2d(base * 8, base * 8, 3, 1, 1, bias=False),
+            nn.BatchNorm2d(base * 8),
             nn.ReLU(inplace=True),
         )
-        self.down_from_p2 = nn.Sequential(
-            nn.Conv2d(base, base, 3, 2, 1, bias=False),
-            nn.BatchNorm2d(base),
-            nn.ReLU(inplace=True),
-        )
-        self.up_from_p4 = nn.Sequential(
-            nn.Upsample(scale_factor=2.0, mode="bilinear", align_corners=False),
-            nn.Conv2d(base, base, 3, 1, 1, bias=False),
-            nn.BatchNorm2d(base),
-            nn.ReLU(inplace=True),
-        )
+        self._attn_notice_printed = False
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        if self.use_extra:
-            rgb = x[:, :3]
-            extra = x[:, 3:]
-            rgb_feat = self.rgb_ca(self.rgb_stem(rgb))
-            extra_feat = self.extra_branch(extra)
-            x = self.fuse(torch.cat([rgb_feat, extra_feat], dim=1))
-        else:
-            x = self.rgb_ca(self.rgb_stem(x))
+        if self.use_extra and self.input_proj is not None:
+            x = self.input_proj(x)
+        x = self.pos(x)
+        x = self.attn(x)
         self._maybe_log_attention()
-        x2 = self.down2(x)
-        x2 = self.tf2(x2); x2 = self.pf2(x2)
-        x2 = self.down2b(x2)  # 64x64
 
-        x3 = self.down3(x2)  # 32x32
-        x3 = self.tf3(x3); x3 = self.pf3(x3)
+        x256 = self.psi1(x)
+        x128 = self.psi2(x256)
+        x64 = self.psi3(x128)
+        x32 = self.psi4(x64)
+        x16 = self.psi5(x32)
 
-        p3 = self.lateral3(x3)
-        p2 = self.lateral2(x2) + F.interpolate(p3, scale_factor=2.0, mode="nearest")
-        p2 = self.smooth2(p2)
-        p3 = self.smooth3(p3)
-        p4 = self.p4(p3)
-
-        fused = self.conv_mid(p3) + self.down_from_p2(p2) + self.up_from_p4(p4)
+        xhat32 = x32 + self.up_from_16(x16)
+        xhat64 = self.proj_64(x64) + self.up_from_32(xhat32)
+        fused = self.conv_mid(xhat32) + self.down_from_64(xhat64)
         return fused
 
     def _maybe_log_attention(self) -> None:
         if not self._attn_notice_printed:
-            print(
-                "[SMNetBackbone] ChannelAttention active on golden triplet inputs (R=Log, G=Gray, B=Corner)."
-            )
+            print("[SMNetBackbone] PositionalEncoding + DualAxisAttention active.")
             self._attn_notice_printed = True

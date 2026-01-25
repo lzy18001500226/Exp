@@ -106,6 +106,47 @@ def nms_xywh(boxes: torch.Tensor, scores: torch.Tensor, iou_thres: float) -> Lis
     return keep
 
 
+def _plot_curves(log_path: Path, out_path: Path) -> None:
+    try:
+        import matplotlib
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+    except Exception:
+        return
+    if not log_path.exists():
+        return
+    rows = []
+    try:
+        with open(log_path, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                rows.append(json.loads(line))
+    except Exception:
+        return
+    if not rows:
+        return
+    epochs = [r.get("epoch") for r in rows]
+    f1 = [r.get("paper_avg_f1") for r in rows]
+    p = [r.get("paper_avg_p") for r in rows]
+    r = [r.get("paper_avg_r") for r in rows]
+
+    plt.figure(figsize=(8, 5))
+    plt.plot(epochs, f1, label="AvgF1", linewidth=2)
+    plt.plot(epochs, p, label="AvgP", linestyle="--")
+    plt.plot(epochs, r, label="AvgR", linestyle=":")
+    plt.xlabel("Epoch")
+    plt.ylabel("Score")
+    plt.title("Paper Metrics (IoU=0.5, conf=0.5)")
+    plt.grid(True, alpha=0.3)
+    plt.legend()
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    plt.tight_layout()
+    plt.savefig(out_path, dpi=200)
+    plt.close()
+
+
 def _apply_nms_xywh(
     boxes: torch.Tensor,
     scores: torch.Tensor,
@@ -487,8 +528,8 @@ def evaluate_paper_metrics(
 class ModelWrap(nn.Module):
     def __init__(self, num_classes: int, anchor_sizes: List[Tuple[int, int]], in_ch: int = 3):
         super().__init__()
-        self.backbone = SMNetBackbone(in_ch=in_ch, base=64)
-        self.head = AnchorHead(ch=64, num_classes=num_classes, anchor_sizes=anchor_sizes)
+        self.backbone = SMNetBackbone(in_ch=in_ch, base=32)
+        self.head = AnchorHead(ch=256, num_classes=num_classes, anchor_sizes=anchor_sizes)
         self.anchor_sizes = anchor_sizes
 
     def forward(self, x: torch.Tensor):
@@ -578,12 +619,15 @@ def main():
     ap.add_argument("--train-json", type=str, required=True, help="Path to train.json (list of .npz)")
     ap.add_argument("--val-json", type=str, required=True, help="Path to val.json (list of .npz)")
     ap.add_argument("--epochs", type=int, default=20)
-    ap.add_argument("--batch", type=int, default=8)
+    ap.add_argument("--batch", type=int, default=16)
     ap.add_argument("--batch-size", type=int, default=None, help="Alias of --batch")
     ap.add_argument("--accumulation-steps", type=int, default=1, help="Gradient accumulation steps (default 1)")
     ap.add_argument("--num-workers", type=int, default=2, help="DataLoader num_workers (default 2). Use 0 on Windows if issues arise")
     ap.add_argument("--lr", type=float, default=1e-3)
     ap.add_argument("--wd", type=float, default=1e-4)
+    ap.add_argument("--optim", type=str, default="adamw", choices=["sgd", "adamw"], help="Optimizer type")
+    ap.add_argument("--momentum", type=float, default=0.9, help="SGD momentum")
+    ap.add_argument("--nesterov", action="store_true", help="Use Nesterov for SGD")
     ap.add_argument("--warmup", type=int, default=3, help="epochs for linear warmup")
     ap.add_argument("--warmup-epochs", type=int, default=None, help="Alias of --warmup")
     ap.add_argument("--num-classes", type=int, default=24)
@@ -599,18 +643,22 @@ def main():
     ap.add_argument("--paper-iou", type=float, default=0.5, help="IoU threshold for paper-style P/R metrics")
     ap.add_argument("--agnostic-nms", action="store_true", help="Use class-agnostic NMS in evaluation (default: class-wise)")
     ap.add_argument("--ap50", action="store_true", help="Also compute AP50 (VOC07 11-pt) during validation")
+    ap.add_argument("--plot-curves", action="store_true", help="Plot training curves on each validation (requires matplotlib)")
     ap.add_argument("--pos-iou", type=float, default=0.5, help="Positive IOU threshold for anchor assignment")
     ap.add_argument("--neg-iou", type=float, default=0.4, help="Negative IOU threshold for anchor assignment")
     ap.add_argument("--conf-loss", type=str, default="bce", choices=["bce","focal"], help="Confidence loss type")
     ap.add_argument("--focal-alpha", type=float, default=0.25, help="Focal loss alpha (pos weighting)")
     ap.add_argument("--focal-gamma", type=float, default=2.0, help="Focal loss gamma")
+    ap.add_argument("--w-conf", type=float, default=3.0, help="Weight for confidence loss")
+    ap.add_argument("--w-reg", type=float, default=1.0, help="Weight for regression loss")
+    ap.add_argument("--w-cls", type=float, default=1.0, help="Weight for classification loss")
     ap.add_argument("--out", type=str, default=str(Path("Model/SMNet-Output").resolve()), help="output directory for logs and checkpoints")
     ap.add_argument("--log-interval", type=int, default=50, help="batches between progress prints")
     ap.add_argument("--val-interval", type=int, default=2, help="Epoch interval between validations (default 2)")
     ap.add_argument("--per-class-ap", action="store_true", help="Print per-class AP during evaluation")
     ap.add_argument("--dump-vis", type=int, default=0, help="During evaluation, dump predictions for N images to JSON (in out/vis)")
     ap.add_argument("--seed", type=int, default=42, help="Random seed for reproducibility")
-    ap.add_argument("--neg-topk-ratio", type=int, default=0, help="Hard negative mining: keep at most pos*ratio negatives (0 to disable)")
+    ap.add_argument("--neg-topk-ratio", type=int, default=2, help="Hard negative mining: keep at most pos*ratio negatives (0 to disable)")
     # 兼容学生脚本常用参数（作为占位或轻量影响）
     ap.add_argument("--fast-mode", action="store_true", help="Reduce evaluation frequency/IO; bumps --val-interval to >=3")
     ap.add_argument("--resize", type=int, default=512, help="Input resize (only 512 supported; others will be coerced)")
@@ -629,6 +677,19 @@ def main():
     # mixup augmentation
     ap.add_argument("--mixup-prob", type=float, default=0.0, help="Probability of applying Mixup augmentation (0.0 to disable)")
     ap.add_argument("--mixup-alpha", type=float, default=0.5, help="Beta distribution parameter for Mixup")
+    ap.add_argument("--mixup-mode", type=str, default="beta", choices=["beta", "uniform"], help="Mixup lambda sampling mode")
+    ap.add_argument("--mixup-range", type=str, default="0.3,0.7", help="Uniform mixup range when --mixup-mode=uniform")
+    ap.add_argument("--aug-freq-shift", action="store_true", help="Enable frequency shift augmentation")
+    ap.add_argument("--freq-shift-max", type=int, default=0, help="Max frequency shift bins (pixels)")
+    ap.add_argument("--aug-time-stretch", action="store_true", help="Enable time stretch augmentation")
+    ap.add_argument("--time-stretch-range", type=str, default="0.9,1.1", help="Time stretch range, e.g. 0.9,1.1")
+    ap.add_argument("--aug-noise", action="store_true", help="Enable adaptive Gaussian noise augmentation")
+    ap.add_argument("--noise-k-range", type=str, default="0.01,0.05", help="Noise sigma scale range (k*std), e.g. 0.01,0.05")
+    ap.add_argument("--aug-specaug", action="store_true", help="Enable SpecAug (time/freq masking)")
+    ap.add_argument("--specaug-time-max", type=int, default=2, help="Max number of time masks")
+    ap.add_argument("--specaug-freq-max", type=int, default=2, help="Max number of freq masks")
+    ap.add_argument("--specaug-time-ratio", type=float, default=0.2, help="Max time mask ratio")
+    ap.add_argument("--specaug-freq-ratio", type=float, default=0.2, help="Max freq mask ratio")
     # resume / initialize from checkpoint
     ap.add_argument("--resume", type=str, default=None, help="Path to checkpoint (.pth) to resume training from (loads model, optimizer, scheduler, epoch)")
     ap.add_argument("--init-weights", type=str, default=None, help="Path to checkpoint (.pth) to load model weights only (no optimizer/scheduler state)")
@@ -651,6 +712,10 @@ def main():
     out_dir = Path(args.out)
     (out_dir / "ckpts").mkdir(parents=True, exist_ok=True)
     print(f"device: {device}")
+    print(
+        f"[train-cfg] w_conf={args.w_conf} w_reg={args.w_reg} w_cls={args.w_cls} | "
+        f"pos_iou={args.pos_iou} neg_iou={args.neg_iou} | neg_topk_ratio={args.neg_topk_ratio}"
+    )
     # persist hyper-params
     with open(out_dir / 'hparams.json', 'w', encoding='utf-8') as f:
         json.dump(vars(args), f, ensure_ascii=False, indent=2)
@@ -670,24 +735,53 @@ def main():
     if extra_keys:
         print(f"[extra] using extra feature maps: {extra_keys}")
     feature_key = 'golden_triplet'
-    labeled_train_ds = NPZDataset(
-        args.train_json,
+    mixup_range = tuple(float(v) for v in args.mixup_range.split(",") if v.strip())
+    if len(mixup_range) != 2:
+        raise ValueError("--mixup-range must be two comma-separated floats, e.g. 0.3,0.7")
+    time_stretch_range = tuple(float(v) for v in args.time_stretch_range.split(",") if v.strip())
+    if len(time_stretch_range) != 2:
+        raise ValueError("--time-stretch-range must be two comma-separated floats, e.g. 0.9,1.1")
+    noise_k_range = tuple(float(v) for v in args.noise_k_range.split(",") if v.strip())
+    if len(noise_k_range) != 2:
+        raise ValueError("--noise-k-range must be two comma-separated floats, e.g. 0.01,0.05")
+
+    import inspect as _inspect
+    _npz_params = set(_inspect.signature(NPZDataset).parameters.keys())
+    _train_kwargs = dict(
+        index_json=args.train_json,
         require_label=True,
         extra_keys=extra_keys,
         mixup_prob=args.mixup_prob,
         mixup_alpha=args.mixup_alpha,
+        mixup_mode=args.mixup_mode,
+        mixup_range=mixup_range,
+        enable_freq_shift=args.aug_freq_shift,
+        freq_shift_max=args.freq_shift_max,
+        enable_time_stretch=args.aug_time_stretch,
+        time_stretch_range=time_stretch_range,
+        enable_noise=args.aug_noise,
+        noise_k_range=noise_k_range,
+        enable_specaug=args.aug_specaug,
+        specaug_time_max=args.specaug_time_max,
+        specaug_freq_max=args.specaug_freq_max,
+        specaug_time_ratio=args.specaug_time_ratio,
+        specaug_freq_ratio=args.specaug_freq_ratio,
         enable_hflip=bool(args.hflip),
         enable_mixup=(args.mixup_prob > 0.0),
         feature_key=feature_key,
     )
-    val_ds = NPZDataset(
-        args.val_json,
+    _train_kwargs = {k: v for k, v in _train_kwargs.items() if k in _npz_params}
+    labeled_train_ds = NPZDataset(**_train_kwargs)
+    _val_kwargs = dict(
+        index_json=args.val_json,
         require_label=True,
         extra_keys=extra_keys,
         enable_hflip=False,
         enable_mixup=False,
         feature_key=feature_key,
     )
+    _val_kwargs = {k: v for k, v in _val_kwargs.items() if k in _npz_params}
+    val_ds = NPZDataset(**_val_kwargs)
 
     # optional subset on labeled set ONLY (before mixing background)
     if 0.0 < float(args.subset_frac) < 1.0:
@@ -704,14 +798,16 @@ def main():
     if args.background_json:
         try:
             from torch.utils.data import ConcatDataset, Subset
-            bg_raw = NPZDataset(
-                args.background_json,
+            _bg_kwargs = dict(
+                index_json=args.background_json,
                 require_label=False,
                 extra_keys=extra_keys,
                 enable_hflip=False,
                 enable_mixup=False,
                 feature_key=feature_key,
             )
+            _bg_kwargs = {k: v for k, v in _bg_kwargs.items() if k in _npz_params}
+            bg_raw = NPZDataset(**_bg_kwargs)
             bg_n_total = len(bg_raw)
             # decide how many to sample
             target_bg = int(len(labeled_train_ds) * float(args.background_frac)) if hasattr(labeled_train_ds, '__len__') else int(bg_n_total * float(args.background_frac))
@@ -778,13 +874,22 @@ def main():
         state_dict = ckpt.get('model', ckpt)
         model.load_state_dict(state_dict, strict=True)
 
-    criterion = DetectionLoss(num_classes=args.num_classes, w_conf=1.0, w_reg=2.0, w_cls=1.0,
+    criterion = DetectionLoss(num_classes=args.num_classes, w_conf=args.w_conf, w_reg=args.w_reg, w_cls=args.w_cls,
                               pos_iou_th=args.pos_iou, neg_iou_th=args.neg_iou,
                               conf_loss=args.conf_loss, focal_alpha=args.focal_alpha, focal_gamma=args.focal_gamma,
                               neg_topk_ratio=args.neg_topk_ratio)
 
     # optimizer & sched
-    optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.wd)
+    if args.optim == "sgd":
+        optimizer = torch.optim.SGD(
+            model.parameters(),
+            lr=args.lr,
+            momentum=args.momentum,
+            weight_decay=args.wd,
+            nesterov=bool(args.nesterov),
+        )
+    else:
+        optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.wd)
     scaler = GradScaler(enabled=(device.type=='cuda'))
     
     # load checkpoint if resuming
@@ -807,7 +912,16 @@ def main():
         print(f"[resume][warn] start_epoch ({start_epoch}) exceeds target --epochs ({args.epochs}). Resetting to 1 with fresh optimizer. Use --init-weights for cross-stage warm starts.")
         start_epoch = 1
         best_metric = 0.0
-        optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.wd)
+        if args.optim == "sgd":
+            optimizer = torch.optim.SGD(
+                model.parameters(),
+                lr=args.lr,
+                momentum=args.momentum,
+                weight_decay=args.wd,
+                nesterov=bool(args.nesterov),
+            )
+        else:
+            optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.wd)
 
     # cosine schedule excluding warmup
     t_max = max(1, args.epochs - args.warmup)
@@ -831,7 +945,7 @@ def main():
             for g in optimizer.param_groups:
                 g['lr'] = args.lr * epoch / max(1, args.warmup)
         else:
-            scheduler.step(epoch - args.warmup)
+            scheduler.step()
         print(f"\nEpoch {epoch}/{args.epochs} - lr={optimizer.param_groups[0]['lr']:.6f}")
         stat = train_one_epoch(model, train_loader, criterion, anchors_pix, stride, optimizer, scaler, log_interval=args.log_interval, max_steps=args.max_train_steps, device=device, accumulation_steps=args.accumulation_steps)
         print(f"  train: loss={stat['loss']:.4f} pos={stat['pos']:.0f} neg={stat['neg']:.0f} conf={stat.get('loss_conf',0.0):.4f} reg={stat.get('loss_reg',0.0):.4f} cls={stat.get('loss_cls',0.0):.4f}")
@@ -893,6 +1007,8 @@ def main():
                 best_metric = avg_f1
                 torch.save(ckpt, out_dir / 'best.pth')
                 print("  ✓ saved best checkpoint")
+            if args.plot_curves:
+                _plot_curves(log_path, out_dir / "curve.png")
 
     print(f"\nTraining done. Best PR-F1@conf={args.paper_conf:.2f}={best_metric:.4f}")
 
